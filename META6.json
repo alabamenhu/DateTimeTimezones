@@ -3,7 +3,10 @@
   "description": "A module enabling experimental timezone support to DateTime",
   "version": "0.1",
   "perl": "6.*",
-  "auth": "Write me!",
+  "authors": [
+    "Matthew ‘Matéu’ Stephen STUCKWISCH <mateu@softastur.com>"
+  ],
+  "auth": "github:alabamenhu",
   "depends": [],
   "build-depends": [],
   "test-depends": [],
