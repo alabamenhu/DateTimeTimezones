@@ -1,0 +1,18 @@
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+# precompiled files
+.precomp
+lib/.precomp
+#IDE files
+.idea
+DateTimeTimezones.iml
+# C code to be built from
+/resources/tzcode-latest/
+/resources/tzdata-latest/
