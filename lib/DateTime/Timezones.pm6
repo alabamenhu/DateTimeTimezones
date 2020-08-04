@@ -17,11 +17,8 @@ once DateTime.^find_method('new').wrap(
             return callwith self, |c.list, |c.hash.pairs.grep(*.key ne 'olson');
         }
 
-        my \original;
-        {
-            my $*USE-ORIGINAL-DATETIME-NEW = True;
-            original = callwith self, |c;
-        }
+        my $*USE-ORIGINAL-DATETIME-NEW = True;
+        my \original = callwith self, |c;
 
         # Next, we determine what timezone we'll use.
         # Anything the caller gives us takes priority, of course.

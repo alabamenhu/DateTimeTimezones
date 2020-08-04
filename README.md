@@ -7,7 +7,7 @@ To use, simply include it at any point in your code:
 use DateTime::Timezones;
 ```
 
-This extends `DateTime` to include the following three new attribuets:
+This extends `DateTime` to include the following three new attributes whose names *are subject to change*.
 
   * **`.olson-id`** *(Str)*  
   The unique identifier for the timezone. 
@@ -22,9 +22,10 @@ This extends `DateTime` to include the following three new attribuets:
 
 
 For the most part, once you enable it, you won't need to do anything different at all, as it is designed to be as discreet as possible.
-There are, nonetheless, a few things to note where behavior is changed from the expected:
+There are, nonetheless, a few things to note:
 
- * The behavior of `.new` is not fully fleshed out.  Right now, it creates a new `DateTime` as if you hadn't give it a timezone, and then adjusts it o represent the same moment in the given (or implied) zone.  
+ * The default time zone is either **Etc/GMT** *or*, if you have `Intl::UserTimezone`, the one indicated by `user-timezone`.
+ * The behavior of `.new` is not fully fleshed out.  Right now, it creates a new `DateTime` as if you hadn't give it a timezone, and then adjusts it to represent the same moment in the given (or implied) zone.  
  That should only be the behavior for creating a date based on an `Instant`, another `DateTime`, or an `Int`.
  * While the *attribute* **:timezone** will work as expected, returning the appropriate offset from GMT, when used as an argument to `.new()`, its value will only be taken into account in order to calculate the exact time.  
  If no Olson ID is specified via **:tz-id**, the resulting `DateTime` will be set to GMT (Olson ID *Etc/GMT*).

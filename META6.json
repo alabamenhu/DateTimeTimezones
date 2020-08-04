@@ -1,6 +1,6 @@
 {
   "name": "DateTime::Timezones",
-  "description": "Write me!",
+  "description": "A module enabling experimental timezone support to DateTime",
   "version": "0.1",
   "perl": "6.*",
   "auth": "Write me!",
@@ -11,8 +11,7 @@
     "DateTime::Timezones": "lib/DateTime/Timezones.pm6",
     "DateTime::Timezones::Classes": "lib/DateTime/Timezones/Classes.pm6",
     "DateTime::Timezones::Routines": "lib/DateTime/Timezones/Routines.pm6",
-    "DateTime::Timezones::State": "lib/DateTime/Timezones/State.pm6",
-    "DateTime::Timezones::TimezoneAware": "lib/DateTime/Timezones/TimezoneAware.pm6"
+    "DateTime::Timezones::State": "lib/DateTime/Timezones/State.pm6"
   },
   "resources": [
     "TZif/Africa/Abidjan",
@@ -74,7 +73,6 @@
     "TZif/America/Anguilla",
     "TZif/America/Antigua",
     "TZif/America/Araguaina",
-    "TZif/America/Argentina",
     "TZif/America/Aruba",
     "TZif/America/Asuncion",
     "TZif/America/Atikokan",
@@ -129,14 +127,12 @@
     "TZif/America/Halifax",
     "TZif/America/Havana",
     "TZif/America/Hermosillo",
-    "TZif/America/Indiana",
     "TZif/America/Indianapolis",
     "TZif/America/Inuvik",
     "TZif/America/Iqaluit",
     "TZif/America/Jamaica",
     "TZif/America/Jujuy",
     "TZif/America/Juneau",
-    "TZif/America/Kentucky",
     "TZif/America/Knox_IN",
     "TZif/America/Kralendijk",
     "TZif/America/La_Paz",
@@ -167,7 +163,6 @@
     "TZif/America/Nipigon",
     "TZif/America/Nome",
     "TZif/America/Noronha",
-    "TZif/America/North_Dakota",
     "TZif/America/Nuuk",
     "TZif/America/Ojinaga",
     "TZif/America/Panama",
@@ -570,6 +565,6 @@
     "TZif/America/North_Dakota/Center",
     "TZif/America/North_Dakota/New_Salem"
   ],
-  "license": "Write me!",
-  "source-url": "Write me!"
+  "license": "Artistic-2.0",
+  "source-url": "git://github.com/alabamenhu/DateTimeTimezones.git"
 }

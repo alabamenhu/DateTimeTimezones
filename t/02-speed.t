@@ -1,6 +1,7 @@
 # Okay, this isn't actually a real test file.
 # It's designed to judge the performance implications of using Timezone aware.
 # Quantity to test
+use Test;
 my $q = 100; # quantity to test;
 
 my $start = now;
@@ -20,3 +21,4 @@ my $time2 = now - $start;
 say "Time results for $q new instances";
 say "Original: ", $time1;
 say "Timezone: ", $time2;
+done-testing;

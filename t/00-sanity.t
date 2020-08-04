@@ -1,7 +1,7 @@
 use DateTime::Timezones;
 use Test;
 
-my $a = DateTime.new(now, :tz-id<America/New_York>);
+#my $a = DateTime.new(now, :tz-id<America/New_York>);
 
 #say $a.olson;
 #say $a.tz-abbr;
