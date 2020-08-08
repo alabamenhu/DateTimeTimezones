@@ -25,11 +25,11 @@ For the most part, once you enable it, you won't need to do anything different a
 There are, nonetheless, a few things to note:
 
  * The default time zone is either **Etc/GMT** *or*, if you have `Intl::UserTimezone`, the one indicated by `user-timezone`.
- * The behavior of `.new` is not fully fleshed out.  Right now, it creates a new `DateTime` as if you hadn't give it a timezone, and then adjusts it to represent the same moment in the given (or implied) zone.  
- That should only be the behavior for creating a date based on an `Instant`, another `DateTime`, or an `Int`.
- * While the *attribute* **:timezone** will work as expected, returning the appropriate offset from GMT, when used as an argument to `.new()`, its value will only be taken into account in order to calculate the exact time.  
- If no Olson ID is specified via **:tz-id**, the resulting `DateTime` will be set to GMT (Olson ID *Etc/GMT*).
- In the future, if the **:timezone** represents an exact hour offset, this module may set the Olson ID accordingly (e.g. *Etc/GMT+4*), but that is not yet implemented.
+ * The attribute `timezone` has been modified slightly. 
+ You may pass either an integer *or* an Olson ID.
+ If you pass an integer, it will be taken into account, but the resultant time will be zoned to GMT.
+ When accessing `timezone`, you will get the offset with the Olson ID mixed in, so it should Just Work™. 
+ If you absolutely must have a strict `Int` value, use `.offset`, and for a strict `Str` value, use `.olson-id`
  * **(NYI)** The formatter has been changed to indicate the timezone.
  This makes it incompatible with RFC 3339.
  The `use` option 'rfc3339' will restore the original formatter.
@@ -38,14 +38,6 @@ There are, nonetheless, a few things to note:
  * I have absolutely no idea (read: have not tested) how `.later()` and `.earlier()` function.
  You may get unexpected results if you use them and cross a timezone transition.
  
-## How accurate is it?
-
-As accurate as the IANA database is.
-In practical terms, anytime from 1970 to the present can be considered to be accurately represented.
-
-For future times, accuracy should be acceptable, but it is always possible that a government will announce a change to their timezone policy.
-For this reason, it is recommended to *always store data in GMT/UTC format* and, if necessary for user-facing things, a timezone.
-
 ### Leapseconds
 
 Leapseconds are annoying for timekeeping.

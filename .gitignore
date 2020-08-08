@@ -14,5 +14,5 @@ lib/.precomp
 .idea
 DateTimeTimezones.iml
 # C code to be built from
-/resources/tzcode-latest/
+/resources/update/tzcode-latest/
 /resources/tzdata-latest/

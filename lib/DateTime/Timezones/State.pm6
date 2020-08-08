@@ -25,6 +25,7 @@ method new (blob8 $tz, :$name) {
     # determine version           T    Z    i    f  [v.#][0 xx 15]
     $VERSION = 1 if $tz[^20] ~~ [0x54,0x5A,0x69,0x66,   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
     $VERSION = 2 if $tz[^20] ~~ [0x54,0x5A,0x69,0x66,0x32,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+
     die 'TZ file does not begin with correct header (must begin with "TZif")'
         unless $VERSION;
 
@@ -127,10 +128,11 @@ method new (blob8 $tz, :$name) {
     # Collect leapseconds
 
     my LeapSecondInfo @leap-seconds;
+    my $leap-length = $VERSION == 1 ?? 8 !! 12;
     for ^$leapcnt {
         @leap-seconds.push:
-                LeapSecondInfo.new($tz.subbuf: $pos,8);
-        $pos += 8;
+                LeapSecondInfo.new($tz.subbuf: $pos, $leap-length);
+        $pos += $leap-length;
     }
 
 

@@ -56,6 +56,7 @@ We end up with the following class (the C<zic_t> type is just an alias
 for a 64-bit int):
 =end pod
 
+#`[
 class Rule {
     #= Defines how time changes across the years
 
@@ -82,6 +83,7 @@ class Rule {
     has Bool  $.todo;         #= Used in outzone, may be deletable.
     has int64 $.temp;         #= Used in outzone, may be deletable.
 }
+]
 
 =begin pod
 Νext, we define the zones.  Zones are, as their name suggests, based on
@@ -114,6 +116,7 @@ The C code defines the zone as the following
 Which converted into Raku code generates leaves us with the following:
 =end pod
 
+#`[
 class Zone {
     has str   $.name;             #= The name identifying this zone (Continent/City format)
     has int64 $.std-offset;       #= The offset for standard time from GMT
@@ -130,6 +133,7 @@ class Zone {
     has Rule  $.until-rule;       #= ?? The new rule to be used when the zone's until is complete
     has int64 $.until-time;       #= The time up to which the zone's definition is in effect
 }
+]
 
 =begin pod
 The last primary class we need to deal with is a link, which simply associates
@@ -339,9 +343,16 @@ class LeapSecondInfo is export {
     has int64 $.transition; # When the leap second occurs
     has int64 $.correction; # How much time is added / subtracted
     method new(blob8 $b) {
-        self.bless:
-                :transition($b.read-int64: 0),
-                :cummulative($b.read-int64: 4)
+        if $b.elems == 8 {
+            return self.bless:
+                    :transition($b.read-int32: 0),
+                    :cummulative($b.read-int32: 4)
+        } elsif $b.elems == 12 {
+            return self.bless:
+                    :transition($b.read-int64: 0),
+                    :cummulative($b.read-int32: 8)
+        } else {
+            die "Bad leap second information passed";
+        }
     }
-
 }
