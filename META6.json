@@ -503,7 +503,7 @@
   "perl": "6.*",
   "name": "DateTime::Timezones",
   "auth": "github:alabamenhu",
-  "version": "0.2",
+  "version": "0.2.1",
   "description": "A module enabling experimental timezone support to DateTime",
   "test-depends": [
     "Test"
