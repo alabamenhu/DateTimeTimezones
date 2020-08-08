@@ -56,6 +56,8 @@ The data files come from the [IANA](https://www.iana.org/time-zones), although a
 Soon an easy updater script will be written for future maintainers. 
 
 ## Version history
+  - **0.2.1**  
+    - Fixed creation from Instants by adding `.floor`
   - **0.2**  
     - TZif files generated on our own directly from the TZ database.
     - Fixed error in parsing leapseconds from TZif files
