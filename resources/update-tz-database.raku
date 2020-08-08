@@ -65,8 +65,8 @@ constant $wide = "\x001b#6";
 
 
 # Gotta say hi and try to be fancy (yes I got bored)
-my @header-choices = (1, 2 xx 10).pick;
-say header 1;
+my @header-choices = (1, 2 xx 10).flat;
+say header @header-choices.pick;
 
 
 =begin pod

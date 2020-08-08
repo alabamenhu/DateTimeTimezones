@@ -54,3 +54,14 @@ It has a few tricks to make sure it doesn't apply the role multiple times.
 
 The data files come from the [IANA](https://www.iana.org/time-zones), although at the moment we don't do our own compiling of them to binary form.
 Soon an easy updater script will be written for future maintainers. 
+
+## Version history
+  - **0.2**  
+    - TZif files generated on our own directly from the TZ database.
+    - Fixed error in parsing leapseconds from TZif files
+    - Fixed offset calculation error caused by misreading C code
+    - Added test files (but more are needed, esp for leapseconds)
+    - Created automated updater script for ease of maintenance.
+  - **0.1**  
+    - First release.
+    - Basic support for creation of `DateTime` with timezone information.
