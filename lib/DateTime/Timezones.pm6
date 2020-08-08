@@ -32,7 +32,7 @@ INIT DateTime.^find_method('new').wrap(
             # We can obtain an exact GMT-offset.
             my \arg    = c.list.head;
             my \posix  = arg ~~ Instant
-                      ?? arg.to-posix.head
+                      ?? arg.to-posix.head.floor
                       !! arg;
 
             my \tz-id  = c.hash<tz-id> // (c.hash<timezone> ~~ Str ?? c.hash<timezone> !! 'Etc/GMT');
