@@ -3,7 +3,7 @@ use Test;
 my @timezones = <Etc/GMT America/New_York America/Los_Angeles Europe/Madrid
                  Asia/Tokyo Africa/Kinshasa Africa/Mogadishu Asia/Qatar Asia/Singapore>;
 
-for ^25 {
+for ^10 {
     my $timezone = get-timezone-data @timezones.roll;
     my $in = (^1700000000).roll;
 

@@ -6,6 +6,7 @@ role TimezoneAware[$olson = "Etc/GMT", $abbr = "GMT", $dst = False] {
     method tz-abbr (-->  Str) { $abbr  }
     method is-dst  (--> Bool) { $dst   }
 }
+subset NotTimezoneAware of DateTime where * !~~ TimezoneAware;
 
 use DateTime::Timezones::Routines;
 
@@ -89,13 +90,14 @@ INIT DateTime.^find_method('new').wrap(
         } elsif c ~~ :(DateTime $, *%) {
             my \orig = c.list.head;
             my \args = c.hash;
-            time-in.year       = args<year>         // orig.year;
-            time-in.month      = args<month>        // orig.month;
-            time-in.day        = args<day>          // orig.day;
-            time-in.hour       = args<hour>         // orig.hour;
-            time-in.minute     = args<minute>       // orig.minute;
-            time-in.second     = args<second>.floor // orig.second.floor; # may be fractional
-            time-in.dst        = args<daylight>     // -1;
+
+            time-in.year       = args<year>          // orig.year;
+            time-in.month      = args<month>         // orig.month;
+            time-in.day        = args<day>           // orig.day;
+            time-in.hour       = args<hour>          // orig.hour;
+            time-in.minute     = args<minute>        // orig.minute;
+            time-in.second     = args<second> ?? args<second>.floor !! orig.second.floor;
+            time-in.dst        = args<daylight>      // -1;
             time-in.gmt-offset = args<timezone> ~~ Int ?? args<timezone> !! orig.offset;
         } elsif c ~~ :(Int() $Y, Int() $M, Int()     $D,
                        Int() $h, Int() $m, Numeric() $s) {
@@ -141,27 +143,39 @@ INIT DateTime.^find_method('new').wrap(
 
         # Now we run it back through localtime, to ensure we have the right
         # offsets and dst settings.
-        say "When checking, our time object is ", time;
+
         my \time-out = localtime tz, time;
-            say "Time out is", time-out;
+
         my $*USE-ORIGINAL-DATETIME-NEW = True;
         my \tz-aware = callwith(self, time)
-            but TimezoneAware[tz-id,time-out.tz-abbr,time-out.dst];
+            but TimezoneAware[tz-id,time-out.tz-abbr,time-out.dst.Bool];
         tz-aware.^set_name('DateTime');
         return tz-aware
 
     }
 );
 
-INIT DateTime.^find_method('timezone').wrap(
-    method (|c) {
-        with self.?olson-id {
-            callsame() but self.?olson-id
-        }else{
-            callsame()
-        }
+# If we have a writable container and someone calls timezone, we
+# should attempt to upgrade to being TimezoneAware.  Otherwise,
+# we have to convert on each call.  Because we'll rely on multis,
+# the wrapper has to be declared separately, but INIT scoping keeps
+# us from polluting.  Only problem is that if we error, our
+# message will refer to the *sub* timezone, potentially confusing.
+INIT {
+    proto sub timezone (|) { * }
+    multi sub timezone (TimezoneAware $self, |c) is default {
+        IntStr.new: $self.offset, $self.olson-id
     }
-);
+    multi sub timezone (NotTimezoneAware $self is rw, |c) {
+        $self = DateTime.new: $self;
+        IntStr.new: $self.offset, $self.olson-id
+    }
+    multi sub timezone (NotTimezoneAware $self, |c) {
+        DateTime.new($self).timezone
+    }
+
+    DateTime.^find_method('timezone').wrap: &timezone
+}
 
 INIT DateTime.^find_method('in-timezone').wrap(
     method (|c) {
@@ -195,4 +209,52 @@ INIT DateTime.^find_method('posix').wrap(
             die "No arguments allowed for .posix";
         }
     }
-)
+);
+
+# The TimezoneAware methods require fallback support.
+# Because they must be multi'd (depending on the writability of their container)
+# we first define each of them as multi subs.
+#
+# To add as a fallback, the syntax is a bit trickier, wherein we create two
+# blocks, one that checks if the method name matches us (always True), and the
+# second that returns the actual method (sub, in our case) to be used.
+
+INIT {
+    proto sub olson-id (|) { * }
+    multi sub olson-id (DateTime $self is rw, |c) {
+        $self = DateTime.new: $self;
+        $self.olson-id
+    }
+    multi sub olson-id (DateTime $self, |c) {
+        DateTime.new($self).olson-id
+    }
+
+    proto sub tz-abbr (|) { * }
+    multi sub tz-abbr (DateTime $self is rw, |c) {
+        $self = DateTime.new: $self;
+        $self.tz-abbr
+    }
+    multi sub tz-abbr (DateTime $self, |c) {
+        DateTime.new($self).tz-abbr
+    }
+
+    proto sub is-dst (|) { * }
+    multi sub is-dst (DateTime $self is rw, |c) {
+        $self = DateTime.new: $self;
+        $self.is-dst
+    }
+    multi sub is-dst (DateTime $self, |c) {
+        DateTime.new($self).is-dst
+    }
+
+
+    DateTime.^add_fallback:
+        anon sub condition ($object, $want) { $want eq 'olson-id' },
+        anon sub calculate ($object, $want) {          &olson-id  };
+    DateTime.^add_fallback:
+        anon sub condition ($object, $want) { $want eq 'tz-abbr' },
+        anon sub calculate ($object, $want) {          &tz-abbr  };
+    DateTime.^add_fallback:
+        anon sub condition ($object, $want) { $want eq 'is-dst' },
+        anon sub calculate ($object, $want) {          &is-dst  };
+}

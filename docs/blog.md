@@ -157,7 +157,7 @@ Before returning, we store the variable like so:
 And violà, it looks totally normally, except it has those extra methods.
 
 Now we tackle the second method, which is from being given discrete time units.
-There is a `gmt-from-local` routine that takes the aforemention `tm` struct along with a timezone and tries to reconcile the two to get a POSIX time (if you ask me for 2:30 on a day we spring forward… we'll have problems).
+There is a `gmt-from-local` routine that takes the aforementioned `tm` struct along with a timezone and tries to reconcile the two to get a POSIX time (if you ask me for 2:30 on a day we spring forward… we'll have problems).
 Once we have the POSIX time, then we can create things like before. 
 I'll spare you all the different ways that this type of creation can happen, but it's easy enough to imagine.
 
@@ -167,6 +167,72 @@ For methods outside of `new` there isn't a lot of work that needs to be done.
 Things like `.day`, `.month`, etc, should all work the same, since the original `DateTime` understands GMT offset.
 
 The important one is `to-timezone` where all we need to do, really, is wrap it and call `.new(self, :$timezone)`.
+
+## Regenerating DateTime
+
+Wrapping is actually a very pervasive thing: you cannot lexically scope it, and so if we wrap at INIT, its effects are seen globally from the get-go.
+Except... there are two phasers that fire *before* INIT.
+They are BEGIN and CHECK.
+If someone were to create a `DateTime` in one of these blocks, it will still be a regular `DateTime` without our mixin.
+Consider the following:
+
+    my $compile-time = BEGIN DateTime.new: now;
+    
+What should we do about this?  If it gets used later, it won't have the attributes that users might depend on.
+How can we help this out? 
+
+Firstly, if the user calls `.day`, there won't be a difference, so we can pass that through.
+But if the user calls, say, `olson-id`, we're in trouble.
+No such method.  Or is there?
+
+Raku objects have a special (psuedo) method called `FALLBACK` that is called when an unknown method is called.  
+I say *psuedo* method because while you can define it is `method FALLBACK`, it's not actually stored as such.
+As a result, it's impossible to say `.^find_method('FALLBACK').wrap(…)`.
+Nonetheless, the same HOW that gives us `^find_method` also gives us `^add_fallback`, although its syntax is a bit trickier.
+
+For example, for the Olson ID method, we can do the following:
+
+    INIT DateTime.^add_fallback:
+        anon sub condition  ($invocant, $method-name --> Bool    ) { $method-name eq 'olson-id' }
+        anon sub calculator ($invocant, $method-name --> Callable) { method { … }               };
+        
+Now, even if one of these old school `DateTime` objects manages to stick around, we can do something.
+But what can we do?  As it turns out, a lot... depending.
+
+We could just try to run a fresh set of calculations.
+If the same old-fashioned `DateTime` has us call the method on it regularly, though, then we're wasting a lot of CPU cycles.
+Instead, we can actually replace the object!  While the trait `is rw` is fairly well-known, much less well-known is that it can exist *on the invocant!*
+The only catch is we need to have a scalar container for the invocant, which is done by giving it a sigil:
+
+    method ($self is rw: |c) {
+        $self = …
+    }
+
+There is one small catch, though.  If the `DateTime` is not in a container (for example, it's a constant), we're not only stuck, but the above method will error because `is rw` requires a writable container.
+In that case, we'll need to fallback to recalculating each time.  Small price to pay.
+But how can we even know?  Or make it work since the above errors with unwritable containers?
+Simple answer: multi methods.  Miraculously, if you have two identical methods, but for the trait `is rw`, then dispatch will prefer the `is rw` for writable containers, and the other for unwritables.
+
+    multi method foo ($self is rw: |c) { 
+        self = …  # upgrade for faster calls later
+    }
+    multi method foo ($self: |c) {
+        calculate-with($self)  # slower style here
+    }
+    
+The catch is you can't pass a multi method.  In fact, multi methods can *only* be properly declared and referenced inside of a class declaration.
+The solution is to instead make a multi **sub** outside of `wrap`'s parentheses, and then refer to it with its sigiled self when wrapping:
+
+    proto sub foo (|) { * }
+    multi sub foo ($self is rw, |c) { 
+       self = …               # ^ notice the comma, subs don't have invocants, 
+    }                         #   but they're passed as the first argument
+    multi sub foo ($self, |c) { 
+       calculate-with($self)
+    }                       
+    ….wrap(&foo);
+    
+Wrapping, multiple dispatch, first-class functions, so much stuff going on but we avoid breaking precompilation and manage to not make a single use of `MONKEY-TYPING` :-)
 
 ## Bowties are cool
 
