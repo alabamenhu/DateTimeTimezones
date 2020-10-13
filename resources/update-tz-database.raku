@@ -37,14 +37,16 @@ steps to be performed manually in case something is causing them problems.
 
 First we have a few constants:
 =end pod
-constant $updater-version = '0.5';
-constant $module-version  = '0.3';
+constant $updater-version = '0.5.1';
+constant $module-version  = '0.3.1';
 constant TZ-DATA-URL      = 'ftp://ftp.iana.org/tz/tzdata-latest.tar.gz';
 constant TZ-CODE-URL      = 'ftp://ftp.iana.org/tz/tzcode-latest.tar.gz';
 constant TZ-ZONE-FILES    = <africa antarctica asia australasia etcetera europe
-                             factory northamerica pacificnew southamerica>;
+                             factory northamerica southamerica>; #pacificnew removed in 2020b
 constant TZ-ZIC-FILES     = <zic.c private.h tzfile.h version>;
 
+my \TZ-BIN-DIR     = $*PROGRAM.parent.add('update/bin').resolve;
+my \TZ-DL-DIR      = $*PROGRAM.parent.add('update/download').resolve;
 my \TZ-DATA-DL     = $*PROGRAM.parent.add('update/download/tzdata-latest.tar.gz').resolve.Str;
 my \TZ-CODE-DL     = $*PROGRAM.parent.add('update/download/tzcode-latest.tar.gz').resolve.Str;
 my \TZ-DATA-DIR    = $*PROGRAM.parent.add('update/data/').resolve.Str;
@@ -64,10 +66,14 @@ constant $tall2 = "\x001b#4";
 constant $wide = "\x001b#6";
 
 
+# Sometimes github doesn't work well with empty directories,
+# but we need these to be present:
+TZ-BIN-DIR.mkdir;
+TZ-DL-DIR.mkdir;
+
 # Gotta say hi and try to be fancy (yes I got bored)
 my @header-choices = (1, 2 xx 10).flat;
 say header @header-choices.pick;
-
 
 =begin pod
 First we download the files from the IANA website.
@@ -179,7 +185,7 @@ sub get-contents(IO() $folder) {
     my @result;
     for $folder.dir.grep(none *.starts-with('.')) -> IO $item {
         if $item.d {
-            for get-contents($item) -> $sub-item {
+            for get-contents($item).grep(none *.starts-with('.')) -> $sub-item {
                 push @result, ($item.basename ~ '/' ~ $sub-item);
             }
         }else{
@@ -197,7 +203,6 @@ my $meta6 = META6.new(
         version      => Version.new($module-version),
         perl-version => Version.new('6.*'),
         raku-version => Version.new('6.*'),
-        depends      => <JSON::Class>,
         test-depends => <Test>,
         resources    => @resources,
         tags         => <timezones olson datetime time date>,
