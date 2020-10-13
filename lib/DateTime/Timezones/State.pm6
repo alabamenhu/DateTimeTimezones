@@ -26,7 +26,7 @@ method new (blob8 $tz, :$name) {
     $VERSION = 1 if $tz[^20] ~~ [0x54,0x5A,0x69,0x66,   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
     $VERSION = 2 if $tz[^20] ~~ [0x54,0x5A,0x69,0x66,0x32,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 
-    die 'TZ file does not begin with correct header (must begin with "TZif")'
+    die "TZ file for $name does not begin with correct header (must begin with 'TZif'),\nBegan with ", $tz[^20]
         unless $VERSION;
 
     my $pos;
