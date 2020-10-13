@@ -156,7 +156,7 @@ print "Processing zone files... ";
 for TZ-ZONE-FILES<> -> $zone {
     print "\rProcessing zone files... $b","($zone)$x \x001b[K";
     unless my $proc = run(
-            'update/bin/zic',
+            TZ-ZIC-EXE,
             '-d', TZif-DIR,
             '-L', TZ-LEAPSECONDS,
              "{TZ-DATA-DIR}/$zone", :err) {
