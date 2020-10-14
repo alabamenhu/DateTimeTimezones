@@ -48,7 +48,7 @@ INIT DateTime.^find_method('new').wrap(
             my $*USE-ORIGINAL-DATETIME-NEW = True;
 
             my \tz-aware = callwith(self, posix, :timezone(time.gmt-offset))
-                but TimezoneAware[
+                does TimezoneAware[
                     tz-id,         # The Olson ID (e.g. America/New_York)
                     time.tz-abbr,  # The nominal zone (e.g. EST/EDT)
                     time.dst.Bool  # Daylight saving time status.
@@ -148,7 +148,7 @@ INIT DateTime.^find_method('new').wrap(
 
         my $*USE-ORIGINAL-DATETIME-NEW = True;
         my \tz-aware = callwith(self, time)
-            but TimezoneAware[tz-id,time-out.tz-abbr,time-out.dst.Bool];
+            does TimezoneAware[tz-id,time-out.tz-abbr,time-out.dst.Bool];
         tz-aware.^set_name('DateTime');
         return tz-aware
 
