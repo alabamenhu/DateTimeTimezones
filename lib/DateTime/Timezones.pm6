@@ -80,8 +80,8 @@ INIT DateTime.^find_method('new').wrap(
                     (\d\d[<[\.,]>\d ** 1..12]?)                    # 5 second
                     [<[Zz]> | (<[\-\+]> \d\d) [':'? (\d\d)]? ]?    # 6:7 timezone
             /;
-            time-in.year       = +$0;
-            time-in.month      = +$1;
+            time-in.year       = +$0 - 1900; # Time.year is offset from 1900
+            time-in.month      = +$1 - 1;    # Time.month is 0-based
             time-in.day        = +$2;
             time-in.hour       = +$3;
             time-in.minute     = +$4;
@@ -91,20 +91,20 @@ INIT DateTime.^find_method('new').wrap(
             my \orig = c.list.head;
             my \args = c.hash;
 
-            time-in.year       = args<year>          // orig.year;
-            time-in.month      = args<month>         // orig.month;
-            time-in.day        = args<day>           // orig.day;
-            time-in.hour       = args<hour>          // orig.hour;
-            time-in.minute     = args<minute>        // orig.minute;
-            time-in.second     = args<second> ?? args<second>.floor !! orig.second.floor;
-            time-in.dst        = args<daylight>      // -1;
-            time-in.gmt-offset = args<timezone> ~~ Int ?? args<timezone> !! orig.offset;
+            time-in.year       = (args<year>          // orig.year ) - 1900;
+            time-in.month      = (args<month>         // orig.month) -    1;
+            time-in.day        =  args<day>           // orig.day;
+            time-in.hour       =  args<hour>          // orig.hour;
+            time-in.minute     =  args<minute>        // orig.minute;
+            time-in.second     =  args<second> ?? args<second>.floor !! orig.second.floor;
+            time-in.dst        =  args<daylight>      // -1;
+            time-in.gmt-offset =  args<timezone> ~~ Int ?? args<timezone> !! orig.offset;
         } elsif c ~~ :(Int() $Y, Int() $M, Int()     $D,
                        Int() $h, Int() $m, Numeric() $s) {
             # Positional based explicit formatting
             my \args = c.list;
-            time-in.year       = args[0];
-            time-in.month      = args[1];
+            time-in.year       = args[0] - 1900;
+            time-in.month      = args[1] - 1;
             time-in.day        = args[2];
             time-in.hour       = args[3];
             time-in.minute     = args[4];
