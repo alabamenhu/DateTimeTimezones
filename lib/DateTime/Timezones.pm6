@@ -103,25 +103,25 @@ INIT DateTime.^find_method('new').wrap(
                        Int() $h, Int() $m, Numeric() $s) {
             # Positional based explicit formatting
             my \args = c.list;
-            time-in.year       = args[0] - 1900;
-            time-in.month      = args[1] - 1;
-            time-in.day        = args[2];
-            time-in.hour       = args[3];
-            time-in.minute     = args[4];
-            time-in.second     = args[5].floor; # may be fractional
-            time-in.dst        = c.hash<daylight> // -1;
-            time-in.gmt-offset = c.hash<timezone> ~~ Int ?? c.hash<timezone> !! 0;
+            time-in.year       = +args[0] - 1900;
+            time-in.month      = +args[1] - 1;
+            time-in.day        = +args[2];
+            time-in.hour       = +args[3];
+            time-in.minute     = +args[4];
+            time-in.second     = +args[5].floor; # may be fractional
+            time-in.dst        = +c.hash<daylight> // -1;
+            time-in.gmt-offset = +c.hash<timezone> ~~ Int ?? c.hash<timezone> !! 0;
         } elsif c ~~ :( :$year, *%) {
             # Named arguments only.  If not present, default value.
             my \args = c.hash;
-            time-in.year       =  args<year>               - 1900;
-            time-in.month      = (args<month>        // 1) - 1;
-            time-in.day        =  args<day>          // 1;
-            time-in.hour       =  args<hour>         // 0;
-            time-in.minute     =  args<minute>       // 0;
-            time-in.second     = (args<second>       // 0).floor.Int; # may be fractional
-            time-in.dst        =  args<daylight>     // -1;
-            time-in.gmt-offset =  args<timezone> ~~ Int ?? args<timezone> !! 0;
+            time-in.year       =   args<year>               - 1900;
+            time-in.month      = +(args<month>        // 1) - 1;
+            time-in.day        = +(args<day>          // 1);
+            time-in.hour       = +(args<hour>         // 0);
+            time-in.minute     = +(args<minute>       // 0);
+            time-in.second     = +(args<second>       // 0).floor.Int; # may be fractional
+            time-in.dst        = +(args<daylight>     // -1);
+            time-in.gmt-offset =   args<timezone> ~~ Int ?? args<timezone> !! 0; # TODO handle numeric timezone
         } else {
             die "Passed bad arguments to DateTime somehow";
         }
@@ -201,8 +201,8 @@ INIT DateTime.^find_method('posix').wrap(
             my int $jd = self.day + (153 * $m + 2) div 5 + 365 * $y
                 + $y div 4 - $y div 100 + $y div 400 - 32045;
             ($jd - 2440588) * 86400
-              + self.hour      * 3600
-              + self.minute    * 60
+              + self.hour   * 3600
+              + self.minute * 60
               + self.whole-second
               - self.offset # we add this offset from the original NQP routine
         } else {
