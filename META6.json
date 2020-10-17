@@ -497,7 +497,7 @@
     "TZif/HST"
   ],
   "name": "DateTime::Timezones",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "A module enabling experimental timezone support to DateTime",
   "authors": [
     "Matthew Stephen STUCKWISCH <mateu@softastur.org>"

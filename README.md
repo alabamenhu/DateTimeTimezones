@@ -53,10 +53,12 @@ It has a few tricks to make sure it doesn't apply the role multiple times.
 The data files come from the [IANA](https://www.iana.org/time-zones), and are compiled using their zone information compiler (ZIC). 
 
 ## Version history
+  - **0.3.2**
+    - Fixed bugs (found by ZeroDogg) caused when creating DateTimes with values other than `Int` or `Instant`
   - **0.3.1**
     - Upgraded database to the 2020b release
       - Minor updates for Antarctica, Australia, Canada, and Morocco.
-    - Fixed an install issue due to evil `.DS_Store` files (thanks to Zero_Dogg for bringing it to my attention).
+    - Fixed an install issue due to evil `.DS_Store` files (thanks to ZeroDogg for bringing it to my attention).
     - Minor adjustments to the updater script 
   - **0.3**  
     - Support for 'upgrading' timezone-unaware `DateTime` objects that may have been precompiled before this module's `use` statement.
