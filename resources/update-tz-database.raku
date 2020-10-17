@@ -38,7 +38,7 @@ steps to be performed manually in case something is causing them problems.
 First we have a few constants:
 =end pod
 constant $updater-version = '0.5.1';
-constant $module-version  = '0.3.1';
+constant $module-version  = '0.3.2';
 constant TZ-DATA-URL      = 'ftp://ftp.iana.org/tz/tzdata-latest.tar.gz';
 constant TZ-CODE-URL      = 'ftp://ftp.iana.org/tz/tzcode-latest.tar.gz';
 constant TZ-ZONE-FILES    = <africa antarctica asia australasia etcetera europe

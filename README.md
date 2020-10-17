@@ -54,6 +54,8 @@ The data files come from the [IANA](https://www.iana.org/time-zones), and are co
 
 ## Version history
   - **0.3.2**
+    - Upgraded database to the 2020c release
+      - Minor update for Fiji 
     - Fixed bugs (found by ZeroDogg) caused when creating DateTimes with values other than `Int` or `Instant`
   - **0.3.1**
     - Upgraded database to the 2020b release
