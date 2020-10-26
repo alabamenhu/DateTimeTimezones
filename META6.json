@@ -1,9 +1,5 @@
 {
-  "test-depends": [
-    "Test"
-  ],
-  "version": "0.3.2",
-  "meta-version": "0",
+  "auth": "github:alabamenhu",
   "tags": [
     "timezones",
     "olson",
@@ -12,27 +8,6 @@
     "date"
   ],
   "name": "DateTime::Timezones",
-  "authors": [
-    "Matthew Stephen STUCKWISCH <mateu@softastur.org>"
-  ],
-  "support": {
-    "source": "git://github.com/alabamenhu/DateTimeTimezones.git"
-  },
-  "source-url": "git://github.com/alabamenhu/DateTimeTimezones.git",
-  "auth": "github:alabamenhu",
-  "provides": {
-    "DateTime::Timezones::State": "lib/DateTime/Timezones/State.pm6",
-    "DateTime::Timezones::Classes": "lib/DateTime/Timezones/Classes.pm6",
-    "DateTime::Timezones::Routines": "lib/DateTime/Timezones/Routines.pm6",
-    "DateTime::Timezones": "lib/DateTime/Timezones.pm6"
-  },
-  "license": "Artistic-2.0",
-  "depends": [
-  ],
-  "perl": "6.*",
-  "description": "A module enabling experimental timezone support to DateTime",
-  "build-depends": [
-  ],
   "resources": [
     "TZif/Indian/Mauritius",
     "TZif/Indian/Chagos",
@@ -509,5 +484,30 @@
     "TZif/Africa/Freetown",
     "TZif/Factory",
     "TZif/HST"
+  ],
+  "version": "0.3.3",
+  "provides": {
+    "DateTime::Timezones::Classes": "lib/DateTime/Timezones/Classes.pm6",
+    "DateTime::Timezones::State": "lib/DateTime/Timezones/State.pm6",
+    "DateTime::Timezones::Routines": "lib/DateTime/Timezones/Routines.pm6",
+    "DateTime::Timezones": "lib/DateTime/Timezones.pm6"
+  },
+  "perl": "6.*",
+  "support": {
+    "source": "git://github.com/alabamenhu/DateTimeTimezones.git"
+  },
+  "source-url": "git://github.com/alabamenhu/DateTimeTimezones.git",
+  "license": "Artistic-2.0",
+  "authors": [
+    "Matthew Stephen STUCKWISCH <mateu@softastur.org>"
+  ],
+  "meta-version": "0",
+  "test-depends": [
+    "Test"
+  ],
+  "description": "A module enabling experimental timezone support to DateTime",
+  "depends": [
+  ],
+  "build-depends": [
   ]
 }

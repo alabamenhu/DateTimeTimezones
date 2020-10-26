@@ -53,6 +53,9 @@ It has a few tricks to make sure it doesn't apply the role multiple times.
 The data files come from the [IANA](https://www.iana.org/time-zones), and are compiled using their zone information compiler (ZIC). 
 
 ## Version history
+  - **0.3.3**
+    - Upgraded database to the 2020d release
+      - Minor (but urgent) update for Palestine 
   - **0.3.2**
     - Upgraded database to the 2020c release
       - Minor update for Fiji 
