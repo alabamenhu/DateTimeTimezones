@@ -14,8 +14,8 @@ Having lived in countries that did daylight savings time at different times of t
 ## Get the data, run the numbers
 
 There is a huge database called the **tz database** that is a huge repository of timezone data, from when transitions occurred, when daylight savings time when in and out off commission, offsets, everything.
-Like the CLDR, it is updated extremely regularly with data that is subject to correct (unlike Unicode, which promises a high degree of stability).
-Unlike the CLDR, though, it does contain old-school programmer musings (things we should bring back).
+Unlike the Unicode code charts, Raku doesn't include this as a part of its core because of its frequent updates and inherent instability (yay politicians).
+OTOH, it does include some very cool old-fashioned programmer musings which I fully advocate for us bringing back (when was the last time you saw a code base quoting literature in their header?  Knuth?)
 
 Alongside the database is a standard code library -- one that's likely on your computer if you're using a *nix machine -- to convert times from a variety of different representations while taking into consideration timezones.
 It's written in C, so it's highly portable.  
@@ -29,13 +29,13 @@ But once that's done, there's still a problem.  How do we get `DateTime` to unde
 ## Mastering time
 
 Raku's `DateTime`, as mentioned, doesn't really understand time zones outside of knowing what a GMT offset is.
-I probably could have just made a new `DateTimeTZ` class for people to use in `Intl::` modules that would understanding time zones but then I'd need to spend a lot of time ensuring that my code coerced between the two and didn't accept/return the wrong ones and… yeah, that would be annoying because the new `DateTimeTZ` wouldn't be a great drop-in replacement.
+I probably could have just made a new `DateTimeTZ` class for people to use in `Intl::` modules that need to understand time zones but then I'd need to spend a lot of time ensuring that my code coerced between the two and didn't accept/return the wrong ones and… yeah, that would be annoying because the new `DateTimeTZ` wouldn't be a great drop-in replacement.
 
 Another option could be to *augment* DateTime to give it a new `.timezone-id` and `.is-dst` method.
 But it's impossible to know looking at a time what it's timezone ID is.
 While North America and South America share time zones by offset, they have different names (and adjust daylight savings time differently).
-I could try to infer, like with what `Intl::UserTimezone` does, but then we'd lock the user into a single timezone, or require them to constantly mixing roles to specify it. 
-Plus, when you `augment` something, you break precompilation, meaning thatusing time zones with any large module would wreck your start up time.
+I could try to infer, like with what `Intl::UserTimezone` does, but that would only work for timezones in the user's current region at best, and still ultimately end up requiring the user to specify it in some way.
+Plus, when you `augment` something, you break precompilation, meaning that using time zones with any large module would wreck your start up time.
 
 There had to be a better solution.  That solution involved two solutions: one very common, and one rarer.
 
@@ -58,7 +58,7 @@ But they *can* be parameterized.  This might be an abuse but we can end up with 
     }
 
 Now we have a way to make a DateTime know about its time zone but… how do we apply it? 
-Asking users to manually state `DateTime.new(…) but TimezoneAware[…]` would get very tedious, especially since they can't control `DateTime` objects that might be created from those (since `DateTime` is immutable, any adjustments like `.later` create a new `DateTime` object, which wouldn't have the mixin).
+Asking users to manually state `DateTime.new(…) does TimezoneAware[…]` would get very tedious, especially since they can't control `DateTime` objects that might be created from those (since `DateTime` is immutable, any adjustments like `.later` create a new `DateTime` object, which wouldn't have the mixin).
 
 ## Playing with internals by playing with externals
 
@@ -77,7 +77,7 @@ A simple wrapper that just lets us know something was called would be:
     );
     
 Anytime someone calls `.bar` on a `Foo` object, Raku will output what the arguments are as well as the newly made object, and still return it so it doesn't interference with program flow.
-Because we can obtain the result of the original *and then do something with it*, we have the opportunity to mix in our role and have it affect every single `DateTime` that's created by just saying `$result but TimezoneAware[…]`.
+Because we can obtain the result of the original *and then do something with it*, we have the opportunity to mix in our role and have it affect every single `DateTime` that's created by just saying `$result does TimezoneAware[…]`.
 
 There was one small issue I found with using this technique and it's due to `DateTime`'s `.new` being a multimethod.
 Using `callsame` (which would pass us to the original `DateTime`) uses all the original arguments, which makes it impossible for us to add new arguments like `:daylight` or `:dst` or whatever we want to call it because the original method will reject them.
@@ -146,7 +146,7 @@ There's one small annoyance though.  Consider the following now:
     say DateTime.new(now).WHAT; # DateTime+{TimeZoneAware[…]}
     
 Ugh.  That's a veritable mouthful.
-Is there any way we can change that?  
+Is there any way we can change that? 
 As it turns out, there is.  I'm not going to say that you necessary *should* do this, but we want to be as in the background as possible.
 Before returning, we store the variable like so:
 
@@ -154,7 +154,7 @@ Before returning, we store the variable like so:
                 $result.^name = 'DateTime';
                 return $result
                 
-And violà, it looks totally normally, except it has those extra methods.
+And violà, it looks totally normally, except it has those extra methods.  Our new `DateTime` will pass for an old one, even if someone does a name-based comparison (of course, they should use probably use `.isa` or smartmatching, which would work without the name change).
 
 Now we tackle the second method, which is from being given discrete time units.
 There is a `gmt-from-local` routine that takes the aforementioned `tm` struct along with a timezone and tries to reconcile the two to get a POSIX time (if you ask me for 2:30 on a day we spring forward… we'll have problems).
@@ -186,8 +186,7 @@ But if the user calls, say, `olson-id`, we're in trouble.
 No such method.  Or is there?
 
 Raku objects have a special (psuedo) method called `FALLBACK` that is called when an unknown method is called.  
-I say *psuedo* method because while you can define it is `method FALLBACK`, it's not actually stored as such.
-As a result, it's impossible to say `.^find_method('FALLBACK').wrap(…)`.
+If there isn't already a fallback added, we can't wrap it (e.g. `.^find_method('FALLBACK').wrap(…)`).
 Nonetheless, the same HOW that gives us `^find_method` also gives us `^add_fallback`, although its syntax is a bit trickier.
 
 For example, for the Olson ID method, we can do the following:
@@ -196,6 +195,7 @@ For example, for the Olson ID method, we can do the following:
         anon sub condition  ($invocant, $method-name --> Bool    ) { $method-name eq 'olson-id' }
         anon sub calculator ($invocant, $method-name --> Callable) { method { … }               };
         
+If the `condition` sub returns True`, then the method returned in `calculator` is run. 
 Now, even if one of these old school `DateTime` objects manages to stick around, we can do something.
 But what can we do?  As it turns out, a lot... depending.
 
@@ -260,8 +260,8 @@ The default provides a standard format, but since it *can* be changed, there's n
 ## Event Two
 
 One thing contemplated in CLDR data and ICU methods is non-Gregorian calendars.
-THere are some that are working on these for Raku, but they currently exist as their own separate classes that are not interchangeable with the built in `Date` and `DateTime` classes.
-There is nothing stopping anyone from *further* extending `DateTime` with the above methods to add in a new attribute `calendar`, although because some time calculations are hard coded into `DateTime`, it will require a fair bit of extra work, but is well within the realm of possibilities.
+There are some that are working on these for Raku, but they currently exist as their own separate classes that are not interchangeable with the built in `Date` and `DateTime` classes.
+There is nothing stopping anyone from *further* extending `DateTime` with the above methods to add in a new attribute `calendar` that can be set to , although because some time calculations are hard coded into `DateTime`, it will require a fair bit of extra work, but is well within the realm of possibilities.
 
 Our Perl breathren imagined different modules that shared common attributes, but with work, it ought to be possible for one `DateTime` to rule them all (wait, I'm changing cultural reference points, oops).
 Only … um, time, uh, will tell.
