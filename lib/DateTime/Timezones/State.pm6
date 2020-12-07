@@ -8,10 +8,10 @@ has int16 $.type-count = 0;     #= Number of local time type objects (TimeInfo)
 has int16 $.char-count = 0;     #= Number of characters of timezone abbreviation strings (e.g. @!chars.join.chars)
 has Bool  $.go-back    = False; #= Whether the time zone's rules loop in the future.
 has Bool  $.go-ahead   = False; #= Whether the time zone's rules loop in the past.
+has str   $.chars      = "";    #= Time zone abbreviation strings (null delimited)
 has int64 @.ats;                #= Moments when timezone information transitions
 has int16 @.types;              #= The associated rule for each of the transition moments (to enable @!ats Z @!types)
 has TransitionInfo @.ttis;      #= The rules for the transition time, indicating seconds of offset (Transition time information structure)
-has str   $.chars = "";         #= Time zone abbreviation strings (null delimited)
 has LeapSecondInfo @.lsis;      #= The leap seconds for this timezone.
 has str $.name;
 
@@ -21,8 +21,8 @@ multi method gist (::?CLASS:U:) { "(TZif)" }
 method new (blob8 $tz, :$name) {
     my $VERSION;
 
-    # Check initial header to
-    # determine version           T    Z    i    f  [v.#][0 xx 15]
+    # Check initial header to determine version
+    #                 Header:     T    Z    i    f  [v.#][0 xx 15]
     $VERSION = 1 if $tz[^20] ~~ [0x54,0x5A,0x69,0x66,   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
     $VERSION = 2 if $tz[^20] ~~ [0x54,0x5A,0x69,0x66,0x32,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 
