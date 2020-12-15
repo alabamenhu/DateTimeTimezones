@@ -37,8 +37,8 @@ steps to be performed manually in case something is causing them problems.
 
 First we have a few constants:
 =end pod
-constant $updater-version = '0.5.1';
-constant $module-version  = '0.3.2';
+constant $updater-version = '0.6.0';
+constant $module-version  = '0.3.4';
 constant TZ-DATA-URL      = 'ftp://ftp.iana.org/tz/tzdata-latest.tar.gz';
 constant TZ-CODE-URL      = 'ftp://ftp.iana.org/tz/tzcode-latest.tar.gz';
 constant TZ-ZONE-FILES    = <africa antarctica asia australasia etcetera europe
@@ -55,6 +55,7 @@ my \TZ-LEAPSECONDS = $*PROGRAM.parent.add('update/data/leapseconds').resolve.Str
 my \META6-FILE     = $*PROGRAM.parent.parent.add('META6.json').resolve.Str;
 my \VERSION-FILE   = $*PROGRAM.parent.add('update/tz-version').resolve.Str;
 my \TZ-ZIC-EXE     = $*PROGRAM.parent.add('update/bin/zic').resolve.Str;
+my \TZ-BACK-FILE   = $*PROGRAM.parent.add('update/data/backward').resolve.Str;
 
 # Because I like teh pretty
 constant $g = "\x001b[32m";
@@ -104,7 +105,7 @@ use Libarchive::Simple;
 print "Extracting TZ data files... ";
   my $data = archive-read TZ-DATA-DL;
   .extract(destpath => TZ-DATA-DIR)
-    for $data.grep(*.pathname ∈ TZ-ZONE-FILES | 'leapseconds');
+    for $data.grep(*.pathname ∈ TZ-ZONE-FILES | 'leapseconds' | 'backward' );
 say $g, "OK", $x;
 
 
@@ -165,7 +166,32 @@ for TZ-ZONE-FILES<> -> $zone {
     die "Please fix the above and try again.";
   }
 }
-say "\rProcessing timezone files... ", $g, "OK", $x, "\x001b[K";
+say "\rProcessing zone files... ", $g, "OK", $x, "\x001b[K";
+
+
+=begin pod
+Around 1993, a number of timezones were renamed.  It is likely that
+the names may stick around, so for now in lieu of a more involved
+solution, we simply copy the files.
+=end pod
+
+print "Establishing back links... ";
+for TZ-BACK-FILE.IO.lines -> $line {
+    next unless $line ~~ /^Link \h+ $<new>=<[a..zA..Z/_-]>+ \h+ $<old>=<[a..zA..Z/_-]>+/;
+    print "\rEstablishing back links... $b","($<old>)$x \x001b[K";
+    run('mkdir', '-p', TZif-DIR.IO.add($<old>).parent.resolve.Str);
+    unless my $proc = run(
+            'cp',
+            "{TZif-DIR}/$<new>",
+            "{TZif-DIR}/$<old>", :err) {
+        my $err = $proc.err.slurp(:close);
+        next if $err.contains('identical');
+        say("   ", $r, "|", $x, " $_") for $err.lines;
+        die "Please fix the above and try again.";
+    }
+}
+say "\rEstablishing back links... ", $g, "OK", $x, "\x001b[K";
+
 
 
 =begin pod
@@ -237,7 +263,7 @@ print "Cleaning up files... ";
 TZ-CODE-DL.IO.unlink;
 TZ-DATA-DL.IO.unlink;
 TZ-ZIC-EXE.IO.unlink;
-.unlink for TZ-DATA-DIR.IO.dir.grep(*.basename ∈ TZ-ZIC-FILES | TZ-ZONE-FILES | 'leapseconds');
+.unlink for TZ-DATA-DIR.IO.dir.grep(*.basename ∈ TZ-ZIC-FILES | TZ-ZONE-FILES | 'leapseconds' | 'backward' );
 say $g, "OK", $x, "\n";
 
 =begin pod
