@@ -1,5 +1,8 @@
 # DateTime::Timezones
 
+> Phileas Fogg avait, «sans s'en douter», gagné un jour sur son itinéraire, - et cela uniquement parce qu'il avait fait le tour du monde en allant vers l'est, et il eût, au contraire, perdu un jour en allant en sens inverse, soit vers l'ouest.  
+> — *Le Tour du monde en quatre-vingts jours* (Jules Vernes)
+
 An module to extend the built in `DateTime` with timezone support.
 To use, simply include it at any point in your code:
 
@@ -22,7 +25,6 @@ This extends `DateTime` to include the following three new attributes whose name
   This value is `True` if the timezone is in what is commonly referred to as either Daylight Saving Time (hence the attribute name) or Summer Time where the timezone is shifted by (normally) one hour.
   The value is `False` during Standard time which in many timezones is the only possible value.
 
-
 For the most part, once you enable it, you won't need to do anything different at all, as it is designed to be as discreet as possible.
 There are, nonetheless, a few things to note:
 
@@ -37,6 +39,10 @@ There are, nonetheless, a few things to note:
  The `use` option 'rfc3339' will restore the original formatter.
  * Using `.later()` and `.earlier()` methods are currently untested.
  You may get unexpected results if you use them and cross a timezone transition.
+ * You should only use this on your executed script.  
+ Modules that wish to take advantage of `DateTime::Timezones` should *not* `use`it, and instead assume that the methods exist. 
+ If functionality is critical, you can try sticking in a `die unless DateTime.^can('is-dst')` that will be executed at runtime.
+ This is due to a bug in Rakudo where the original methods of wrapped methods are deleted.  I am working to create a workaround.  
  
 ### Leapseconds
 
@@ -53,6 +59,10 @@ It has a few tricks to make sure it doesn't apply the role multiple times.
 The data files come from the [IANA](https://www.iana.org/time-zones), and are compiled using their zone information compiler (ZIC). 
 
 ## Version history
+  - **0.3.5**
+    - Updated to the 2021a release
+      - South Sudan, Russia (Volgograd), Turks and Caicos updated
+      - Many other zones fixed for pre-1986 transitions
   - **0.3.4**
     - Added support for historical Olson IDs (mainly to provide better support with CLDR)
     - Updated updater script to automatically back link older IDs.
