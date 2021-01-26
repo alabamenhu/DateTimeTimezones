@@ -1,3 +1,5 @@
+
+#| The information on timezone and leapseconds for a timezone
 unit class State;
 use DateTime::Timezones::Classes;
 
@@ -163,7 +165,7 @@ method new (blob8 $tz, :$name) {
                 abbr-index => @ttinfo-temp[$i].abbr-index,
                 is-std     => @ttisstd[$i],
                 is-gmt     => @ttisstd[$i],
-                abbr       => %tz-abbr-temp{@ttinfo-temp[$i].abbr-index}
+                abbr       => (%tz-abbr-temp{@ttinfo-temp[$i].abbr-index} // '') # <-- TODO: this is a quick fix for America/Adak which isn't reading the strings properly
     }
 
     # Lastly, we determine the goback/goahead information
