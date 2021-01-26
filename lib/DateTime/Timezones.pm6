@@ -6,6 +6,7 @@ role TimezoneAware[$olson = "Etc/GMT", $abbr = "GMT", $dst = False] {
     method tz-abbr (-->  Str) { $abbr  }
     method is-dst  (--> Bool) { $dst   }
 }
+
 subset NotTimezoneAware of DateTime where * !~~ TimezoneAware;
 
 use DateTime::Timezones::Routines;
@@ -180,10 +181,10 @@ INIT {
 INIT DateTime.^find_method('in-timezone').wrap(
     method (|c) {
         if CALLERS::<$*USE-ORIGINAL-DATETIME-NEW> {
-            return callwith self, c.list.head
+            return callsame
         }
 
-        if c ~~ :($ where Int|Str) {
+        if c ~~ :($ where Int | Str) {
             # TODO check if string can be made into integer
             return self.new: self.posix, :timezone(c.list.head)
         } else {
