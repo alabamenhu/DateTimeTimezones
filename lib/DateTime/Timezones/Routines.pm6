@@ -44,8 +44,12 @@ sub get-timezone-data($olson-id) is export {
     .return with %cache{$olson-id};
 
     use DateTime::Timezones::State;
-    %cache{$olson-id} := State.new:
-            %?RESOURCES{"TZif/$olson-id"}.slurp(:bin), :name($olson-id);
+    # TODO more gracefully handle this
+    with %?RESOURCES{"TZif/$olson-id"}.slurp(:bin) {
+        return %cache{$olson-id} := State.new: $_, :name($olson-id)
+    }else{
+        die "Unknown timezone $olson-id";
+    }
 }
 
 
