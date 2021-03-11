@@ -3,7 +3,6 @@
 unit class State;
 use DateTime::Timezones::Classes;
 
-
 has int16 $.leap-count = 0;     #= Number of leap seconds (e.g. +@!lsis)
 has int16 $.time-count = 0;     #= Number of transition moments (e.g. +@!ats)
 has int16 $.type-count = 0;     #= Number of local time type objects (TimeInfo)

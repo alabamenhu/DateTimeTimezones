@@ -1,12 +1,17 @@
+#| A module to enable time zones in Raku
 unit module Timezones;
 
-
+#| Role that makes DateTime understand timezones
 role TimezoneAware[$olson = "Etc/GMT", $abbr = "GMT", $dst = False] {
+    #| The unique tag that identifies the timezone
     method olson-id   (-->  Str) { $olson }
+    #| A mostly unique abbreviation for the time zone that aligns more closely to popular usage
     method tz-abbr (-->  Str) { $abbr  }
+    #| Whether it is daylight savings time
     method is-dst  (--> Bool) { $dst   }
 }
 
+#| DateTime objects that do not understand timezones
 subset NotTimezoneAware of DateTime where * !~~ TimezoneAware;
 
 use DateTime::Timezones::Routines;
