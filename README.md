@@ -59,6 +59,11 @@ It has a few tricks to make sure it doesn't apply the role multiple times.
 The data files come from the [IANA](https://www.iana.org/time-zones), and are compiled using their zone information compiler (ZIC). 
 
 ## Version history
+  - **0.3.6**
+    - Updated to the 2021b release
+      - Jordan and Samoa updated
+      - Zone mergers and renamings
+      - Pre-1993 fixes for Malawi, Portugal, etc
   - **0.3.5**
     - Updated to the 2021a release
       - South Sudan, Russia (Volgograd), Turks and Caicos updated

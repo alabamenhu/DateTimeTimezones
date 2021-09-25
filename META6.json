@@ -1,10 +1,5 @@
 {
-  "tags": [
-    "timezones",
-    "olson",
-    "datetime",
-    "time",
-    "date"
+  "build-depends": [
   ],
   "resources": [
     "TZif/Indian/Mauritius",
@@ -87,6 +82,7 @@
     "TZif/Pacific/Truk",
     "TZif/Pacific/Pitcairn",
     "TZif/Pacific/Marquesas",
+    "TZif/Pacific/Kanton",
     "TZif/Pacific/Bougainville",
     "TZif/Pacific/Tarawa",
     "TZif/Pacific/Rarotonga",
@@ -601,31 +597,35 @@
     "TZif/Canada/Mountain",
     "TZif/Iceland"
   ],
-  "raku": "6.*",
-  "version": "0.3.5",
-  "test-depends": [
-    "Test"
-  ],
-  "authors": [
-    "Matthew Stephen STUCKWISCH <mateu@softastur.org>"
-  ],
-  "build-depends": [
-  ],
-  "perl": "6.*",
-  "description": "A module enabling experimental timezone support to DateTime",
-  "name": "DateTime::Timezones",
   "source-url": "git://github.com/alabamenhu/DateTimeTimezones.git",
-  "license": "Artistic-2.0",
-  "depends": null,
+  "provides": {
+    "DateTime::Timezones::State": "lib/DateTime/Timezones/State.pm6",
+    "DateTime::Timezones::Routines": "lib/DateTime/Timezones/Routines.pm6",
+    "DateTime::Timezones::Classes": "lib/DateTime/Timezones/Classes.pm6",
+    "DateTime::Timezones": "lib/DateTime/Timezones.pm6"
+  },
+  "description": "A module enabling experimental timezone support to DateTime",
   "support": {
     "source": "git://github.com/alabamenhu/DateTimeTimezones.git"
   },
-  "meta-version": "0",
+  "authors": [
+    "Matthew Stephen STUCKWISCH <mateu@softastur.org>"
+  ],
+  "name": "DateTime::Timezones",
+  "license": "Artistic-2.0",
+  "version": "0.3.6",
   "auth": "github:alabamenhu",
-  "provides": {
-    "DateTime::Timezones::Classes": "lib/DateTime/Timezones/Classes.pm6",
-    "DateTime::Timezones": "lib/DateTime/Timezones.pm6",
-    "DateTime::Timezones::State": "lib/DateTime/Timezones/State.pm6",
-    "DateTime::Timezones::Routines": "lib/DateTime/Timezones/Routines.pm6"
-  }
+  "raku": "6.*",
+  "meta-version": "0",
+  "tags": [
+    "timezones",
+    "olson",
+    "datetime",
+    "time",
+    "date"
+  ],
+  "depends": null,
+  "test-depends": [
+    "Test"
+  ]
 }
