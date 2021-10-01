@@ -1,6 +1,31 @@
 {
+  "support": {
+    "source": "git://github.com/alabamenhu/DateTimeTimezones.git"
+  },
+  "license": "Artistic-2.0",
+  "description": "A module enabling experimental timezone support to DateTime",
+  "version": "0.3.7",
+  "name": "DateTime::Timezones",
+  "raku": "6.*",
+  "test-depends": [
+    "Test"
+  ],
+  "source-url": "git://github.com/alabamenhu/DateTimeTimezones.git",
+  "tags": [
+    "timezones",
+    "olson",
+    "datetime",
+    "time",
+    "date"
+  ],
   "build-depends": [
   ],
+  "depends": null,
+  "authors": [
+    "Matthew Stephen STUCKWISCH <mateu@softastur.org>"
+  ],
+  "meta-version": "0",
+  "auth": "github:alabamenhu",
   "resources": [
     "TZif/Indian/Mauritius",
     "TZif/Indian/Chagos",
@@ -597,35 +622,10 @@
     "TZif/Canada/Mountain",
     "TZif/Iceland"
   ],
-  "source-url": "git://github.com/alabamenhu/DateTimeTimezones.git",
   "provides": {
-    "DateTime::Timezones::State": "lib/DateTime/Timezones/State.pm6",
-    "DateTime::Timezones::Routines": "lib/DateTime/Timezones/Routines.pm6",
+    "DateTime::Timezones": "lib/DateTime/Timezones.pm6",
     "DateTime::Timezones::Classes": "lib/DateTime/Timezones/Classes.pm6",
-    "DateTime::Timezones": "lib/DateTime/Timezones.pm6"
-  },
-  "description": "A module enabling experimental timezone support to DateTime",
-  "support": {
-    "source": "git://github.com/alabamenhu/DateTimeTimezones.git"
-  },
-  "authors": [
-    "Matthew Stephen STUCKWISCH <mateu@softastur.org>"
-  ],
-  "name": "DateTime::Timezones",
-  "license": "Artistic-2.0",
-  "version": "0.3.6",
-  "auth": "github:alabamenhu",
-  "raku": "6.*",
-  "meta-version": "0",
-  "tags": [
-    "timezones",
-    "olson",
-    "datetime",
-    "time",
-    "date"
-  ],
-  "depends": null,
-  "test-depends": [
-    "Test"
-  ]
+    "DateTime::Timezones::Routines": "lib/DateTime/Timezones/Routines.pm6",
+    "DateTime::Timezones::State": "lib/DateTime/Timezones/State.pm6"
+  }
 }
