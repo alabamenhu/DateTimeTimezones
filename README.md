@@ -59,6 +59,9 @@ It has a few tricks to make sure it doesn't apply the role multiple times.
 The data files come from the [IANA](https://www.iana.org/time-zones), and are compiled using their zone information compiler (ZIC). 
 
 ## Version history
+  - **0.3.8**
+    - Updated to the 2021d release
+      - Fiji updated (no DST for 2021–2022)
   - **0.3.7**
     - Updated to the 2021c release
       - Fixed typos for the **Atlantic/Jan_Mayen** link (and **America/Virgin**, we ignore *backzones*).
