@@ -59,6 +59,17 @@ It has a few tricks to make sure it doesn't apply the role multiple times.
 The data files come from the [IANA](https://www.iana.org/time-zones), and are compiled using their zone information compiler (ZIC). 
 
 ## Version history
+  - **0.4.0** (in progress)
+    - Rewrite tz data reading and fix calculation errors
+    - "Just works" when module is used inside of another module
+      - *Requires Rakudo 2021.10 or later*
+    - Links are handled in code, reducing file size
+  - **0.3.9**
+    - Fixed an issue caused by changes to the ZIC compiler
+      - The `-b fat` option is used for backwards compatibility
+      - Upcoming 0.4 release will better understand TZif v2+ files and fix some calculation errors
+    - Updated to the 2021e release
+      - Minor (but urgent) update for Palestine
   - **0.3.8**
     - Updated to the 2021d release
       - Fiji updated (no DST for 2021–2022)

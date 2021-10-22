@@ -27,9 +27,13 @@ method new (blob8 $tz, :$name) {
     #                 Header:     T    Z    i    f  [v.#][0 xx 15]
     $VERSION = 1 if $tz[^20] ~~ [0x54,0x5A,0x69,0x66,   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
     $VERSION = 2 if $tz[^20] ~~ [0x54,0x5A,0x69,0x66,0x32,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+    $VERSION = 3 if $tz[^20] ~~ [0x54,0x5A,0x69,0x66,0x33,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+    $VERSION = 4 if $tz[^20] ~~ [0x54,0x5A,0x69,0x66,0x34,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 
     die "TZ file for $name does not begin with correct header (must begin with 'TZif'),\nBegan with ", $tz[^20]
         unless $VERSION;
+    die "TZ file for $name is written in an unsupported version (v.$VERSION, support is v.2)"
+        if $VERSION > 2;
 
     my $pos;
 

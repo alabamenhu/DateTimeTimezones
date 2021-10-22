@@ -159,12 +159,13 @@ for TZ-ZONE-FILES<> -> $zone {
     unless my $proc = run(
             TZ-ZIC-EXE,
             '-d', TZif-DIR,
+            '-b', 'fat',             # needed as a quickfix to v3/v4 changes
             '-L', TZ-LEAPSECONDS,
              "{TZ-DATA-DIR}/$zone", :err) {
-    say $r, "ERROR", $x;
-    say("   ", $r, "|", $x, " $_") for $proc.err.slurp(:close).lines;
-    die "Please fix the above and try again.";
-  }
+        say $r, "ERROR", $x;
+        say("   ", $r, "|", $x, " $_") for $proc.err.slurp(:close).lines;
+        die "Please fix the above and try again.";
+    }
 }
 say "\rProcessing zone files... ", $g, "OK", $x, "\x001b[K";
 
@@ -230,7 +231,7 @@ my $meta6 = META6.new(
         perl-version => Version.new('6.*'),
         raku-version => Version.new('6.*'),
         test-depends => <Test>,
-        resources    => @resources,
+        resources    => @resources.grep(! *.Str.contains: 'DS_Store'),
         tags         => <timezones olson datetime time date>,
         authors      => ['Matthew Stephen STUCKWISCH <mateu@softastur.org>'],
         auth         => 'github:alabamenhu',
