@@ -16,17 +16,17 @@ use DateTime::Timezones;
 # First check whether mutable containers are correctly upgraded
 try {
     $olson1.olson-id;
-    ok $olson1 ~~ Timezones::TimezoneAware, "Mutable upgrade for Olson ID";
+    ok $olson1 !=:= CORE::DateTime, "Mutable upgrade for Olson ID";
     CATCH { ok False, "Mutable upgrade for Olson ID" }
 }
 try {
     $abbr1.tz-abbr;
-    ok $abbr1 ~~ Timezones::TimezoneAware, "Mutable upgrade for TZ abbreviation";
+    ok $abbr1 !=:= CORE::DateTime, "Mutable upgrade for TZ abbreviation";
     CATCH { ok False, "Mutable upgrade for TZ abbreviation" }
 }
 try {
     $dst1.is-dst;
-    ok $dst1 ~~ Timezones::TimezoneAware, "Mutable upgrade for DST status";
+    ok $dst1 !=:= CORE::DateTime, "Mutable upgrade for DST status";
     CATCH { ok False, "Mutable upgrade for DST status" }
 }
 
