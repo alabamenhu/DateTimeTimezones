@@ -1,160 +1,145 @@
+#| A module to enable time zones in Raku
 unit module Timezones;
+use Timezones::ZoneInfo;
+
+# Thanks to lizmat++ for this cool way to extend built-ins
+class DateTime is DateTime is export {
+    has Str  $.olson-id; #= The unique tag that identifies the timezone
+    has Str  $.tz-abbr;  #= A mostly unique abbreviation for the time zone that aligns more closely to popular usage
+    has Bool $.is-dst;   #= Whether it is daylight savings time
+
+    #| Creates a new timezone-aware DateTime object
+    method new(|c (*@, :$olson-id, :$timezone, *%)) {
+
+        # The logic here is slightly complicated:
+        #   with tz-id or timezone and will get-time-data for the gmt offset.
+        #   with an offset only
+        #      if a clean multiple of 3600: use GMT±X, where X is offset / 3600.
+        #      if not, use 'Etc/Unknown' *which requires special handling*
+        # todo: if the timezone has an offset, it should be made an Etc/GMT+1 or similar timezone
+
+        my $tz-id;   #= The Olson ID, but different name to avoid clash
+        my $tz-data; #= The data structure from the TZ database
+        my $gmt-off; #= Our ultimate offset from GMT
+
+        # Determine the Olson ID
+        with $timezone {
+            when Str     { $tz-id = ~$timezone }
+            when Numeric {
+                if $timezone %% 3600 {
+                    $gmt-off = $timezone;
+                    $tz-id = $timezone == 0
+                               ?? 'Etc/GMT'
+                               !! 'Etc/GMT'
+                                 ~ ($timezone ≥ 0 ?? '' !! '+') # neg added by Str.Int conversion
+                                 ~ ($timezone / -3600);
+                } else {
+                    $tz-id = 'Etc/Unknown'
+                }
+            }
+        } else {
+            with $olson-id { $tz-id = $olson-id }
+            else           { $tz-id = 'Etc/GMT' }
+        }
+
+        # If we have an Etc/Unknown, we just pass through
+        if $tz-id eq 'Etc/Unknown' {
+            # In this case, we just pass through the data, we can't really do much
+            my \core-dt = CORE::DateTime.new( |c);
+            return self.bless:
+                year     => core-dt.year,
+                month    => core-dt.month,
+                day      => core-dt.day,
+                hour     => core-dt.hour,
+                minute   => core-dt.minute,
+                second   => core-dt.second,
+                timezone => core-dt.timezone,
+                olson-id => 'Etc/Unknown',
+                tz-abbr  => '???',
+                is-dst   => False,
+        }
+
+        # If we were given a timestamp, let the algorithm figure out our dates
+        if c ~~ :(Instant:D, *%)
+        || c ~~ :(Numeric:D, *%) {
+            my \posix = c.list.head ~~ Instant
+                ?? c.list.head.to-posix.head.floor # TODO: deal with the leapsecond here
+                !! c.list.head.floor;
+            my \tz      = timezone-data $tz-id;
+            my \time    = calendar-from-posix posix, tz;
+            return self.bless:
+                year     =>  time.year + 1900,
+                month    =>  time.month + 1,
+                day      =>  time.day,
+                hour     =>  time.hour,
+                minute   =>  time.minute,
+                second   =>  time.second,
+                is-dst   => (time.dst == 1),
+                tz-abbr  =>  time.tz-abbr,
+                olson-id =>  $tz-id,
+                timezone =>  IntStr.new(time.gmt-offset, $tz-id);
+        }
+
+        # If we were given a calendar, figure out the offset, and double check
+        # that the offset is correct.  Create a TM object to pass along
+        use Timezones::ZoneInfo::Time;
+
+        # we were given a calendar
+        my \tm = Time.new;
+        # set up the date, for which there are three formats:
+        #   1. Positional Date + named HMS
+        #   2. Positional ymdHMS
+        #   3. Named ymdHMS
+        #   String format version not yet supported
+        if c ~~ :(Date:D, *%) {
+            with c.list[0] {
+                tm.year   = .year - 1900;
+                tm.month  = .month - 1;
+                tm.day    = .day;
+            }
+            tm.hour   = c.hash<hour>   // 0;
+            tm.minute = c.hash<second> // 0;
+            tm.second = c.hash<second> // 0;
+        } elsif c ~~ :(Int:D $, Int:D $?, Int:D $?, Int:D $?, Int:D $?, $?, *%) {
+            tm.year   = c.list[0] // 0;
+            tm.month  = c.list[1] // 1;
+            tm.day    = c.list[2] // 1;
+            tm.hour   = c.list[3] // 0;
+            tm.minute = c.list[4] // 0;
+            tm.second = c.list[5] // 0;
+        } elsif c ~~ :(:$year!, *%) {
+            tm.hour   = c.hash<year>;
+            tm.minute = c.hash<month>  // 1;
+            tm.second = c.hash<day>    // 1;
+            tm.hour   = c.hash<hour>   // 0;
+            tm.minute = c.hash<second> // 0;
+            tm.second = c.hash<second> // 0;
+        }
+        tm.dst        = c.hash<is-dst>     // -1; # -1 means "we don't know"
+        tm.gmt-offset = c.hash<gmt-offset> //  0;
+
+        my \tz      = timezone-data $tz-id;
+        my \posix   = posix-from-calendar(tm, tz);
+        my \time    = calendar-from-posix posix, tz; # needed basically for those ambiguous times during fallback
 
 
-role TimezoneAware[$olson = "Etc/GMT", $abbr = "GMT", $dst = False] {
-    method olson-id   (-->  Str) { $olson }
-    method tz-abbr (-->  Str) { $abbr  }
-    method is-dst  (--> Bool) { $dst   }
+        self.bless:
+            year     =>  time.year,
+            month    =>  time.year,
+            day      =>  time.day,
+            hour     =>  time.hour,
+            minute   =>  time.minute,
+            second   =>  time.second,
+            is-dst   => (time.dst == 1),
+            tz-abbr  =>  time.tz-abbr,
+            olson-id =>  $tz-id,
+            timezone =>  IntStr.new(time.gmt-offset, $tz-id);
+    }
 }
 
-subset NotTimezoneAware of DateTime where * !~~ TimezoneAware;
-
-use DateTime::Timezones::Routines;
-
-
-# Once because double wrapping would be bad and we're evil enough.
-# Also, because of callwith/callsame, we basically need to make this one big function
-INIT DateTime.^find_method('new').wrap(
-    method (|c) {
-
-        # At some point we need to call the original function without
-        # to get a plain old DateTime.  This distinguishes those calls
-        # from user calls.
-        if CALLERS::<$*USE-ORIGINAL-DATETIME-NEW> {
-            return callwith self, |c;
-        }
-
-        # If given a gmt offset, life is easy.
-        # If not, we need to calculate it and then life is kinda easy.
-        #
-        # There are two methods that allow construction directly from an integer value
-
-        if c ~~ :(Instant:D $, *%)
-        || c ~~ :(Int:D     $, *%) {
-            # We can obtain an exact GMT-offset.
-            my \arg    = c.list.head;
-            my \posix  = arg ~~ Instant
-                      ?? arg.to-posix.head.floor
-                      !! arg;
-
-            my \tz-id  = c.hash<tz-id> // (c.hash<timezone> ~~ Str ?? c.hash<timezone> !! 'Etc/GMT');
-            my \tz     = get-timezone-data tz-id;
-            my \time   = localtime tz, posix;
-                         # ^^ there is room for performance improvements here as
-                         #    all we need to know is the offset at the given time.
-                         #    This also calculates the day/month/year, etc, which
-                         #    DateTime itself will do when we pass it the offset.
-
-
-            my $*USE-ORIGINAL-DATETIME-NEW = True;
-
-            my \tz-aware = callwith(self, posix, :timezone(time.gmt-offset))
-                does TimezoneAware[
-                    tz-id,         # The Olson ID (e.g. America/New_York)
-                    time.tz-abbr,  # The nominal zone (e.g. EST/EDT)
-                    time.dst.Bool  # Daylight saving time status.
-            ];
-            tz-aware.^set_name('DateTime');
-            return tz-aware
-        }
-
-
-        # The user instead gave us (in some way) a set of day/month/year/etc.
-        # Once we get them, we can use a common processing method.
-        use DateTime::Timezones::Classes;
-        my Time \time-in = Time.new;
-
-        if c ~~ :(Str $) {
-            # parse the format string here and set Time's elements.
-            die "Invalid DateTime string '{c.list.head}'; use an ISO 8601 timestamp (yyyy-mm-ddThh:mm:ssZ or yyyy-mm-ddThh:mm:ss+01:00) instead"
-                unless c.list.head ~~ /
-                    (<[+-]>? \d**4 \d*)                            # 0 year
-                    '-'
-                    (\d\d)                                         # 1 month
-                    '-'
-                    (\d\d)                                         # 2 day
-                    <[Tt]>                                         # time separator
-                    (\d\d)                                         # 3 hour
-                    ':'
-                    (\d\d)                                         # 4 minute
-                    ':'
-                    (\d\d[<[\.,]>\d ** 1..12]?)                    # 5 second
-                    [<[Zz]> | (<[\-\+]> \d\d) [':'? (\d\d)]? ]?    # 6:7 timezone
-            /;
-            time-in.year       = +$0 - 1900; # Time.year is offset from 1900
-            time-in.month      = +$1 - 1;    # Time.month is 0-based
-            time-in.day        = +$2;
-            time-in.hour       = +$3;
-            time-in.minute     = +$4;
-            time-in.second     =  $5.Numeric.floor.Int;
-            time-in.gmt-offset = ($6 // 0) * 3600 + ($7 // 0) * 60;
-        } elsif c ~~ :(DateTime $, *%) {
-            my \orig = c.list.head;
-            my \args = c.hash;
-
-            time-in.year       = (args<year>          // orig.year ) - 1900;
-            time-in.month      = (args<month>         // orig.month) -    1;
-            time-in.day        =  args<day>           // orig.day;
-            time-in.hour       =  args<hour>          // orig.hour;
-            time-in.minute     =  args<minute>        // orig.minute;
-            time-in.second     =  args<second> ?? args<second>.floor !! orig.second.floor;
-            time-in.dst        =  args<daylight>      // -1;
-            time-in.gmt-offset =  args<timezone> ~~ Int ?? args<timezone> !! orig.offset;
-        } elsif c ~~ :(Int() $Y, Int() $M, Int()     $D,
-                       Int() $h, Int() $m, Numeric() $s) {
-            # Positional based explicit formatting
-            my \args = c.list;
-            time-in.year       = +args[0] - 1900;
-            time-in.month      = +args[1] - 1;
-            time-in.day        = +args[2];
-            time-in.hour       = +args[3];
-            time-in.minute     = +args[4];
-            time-in.second     = +args[5].floor; # may be fractional
-            time-in.dst        = +c.hash<daylight> // -1;
-            time-in.gmt-offset = +c.hash<timezone> ~~ Int ?? c.hash<timezone> !! 0;
-        } elsif c ~~ :( :$year, *%) {
-            # Named arguments only.  If not present, default value.
-            my \args = c.hash;
-            time-in.year       =   args<year>               - 1900;
-            time-in.month      = +(args<month>        // 1) - 1;
-            time-in.day        = +(args<day>          // 1);
-            time-in.hour       = +(args<hour>         // 0);
-            time-in.minute     = +(args<minute>       // 0);
-            time-in.second     = +(args<second>       // 0).floor.Int; # may be fractional
-            time-in.dst        = +(args<daylight>     // -1);
-            time-in.gmt-offset =   args<timezone> ~~ Int ?? args<timezone> !! 0; # TODO handle numeric timezone
-        } else {
-            die "Passed bad arguments to DateTime somehow";
-        }
-
-
-        # Now that we have figured out the YMD/hms we need to create
-        # we figure out the timezone.
-
-        my \tz-id = c.hash<timezone> ~~ Str ?? c.hash<timezone> !! 'Etc/GMT';
-        my \tz = get-timezone-data tz-id;
-        my \time = gmt-from-local tz, time-in;
-        #if tz-id eq 'Etc/GMT' {
-        #    # There's no need to feed this back through into the timezone
-        #    my $*USE-ORIGINAL-DATETIME-NEW = True;
-        #    my \tz-aware = callwith(self, time)
-        #        but TimezoneAware[tz-id,'GMT',False];
-        #    tz-aware.^set_name('DateTime');
-        #    return tz-aware
-
-        # Now we run it back through localtime, to ensure we have the right
-        # offsets and dst settings.
-
-        my \time-out = localtime tz, time;
-
-        my $*USE-ORIGINAL-DATETIME-NEW = True;
-        my \tz-aware = callwith(self, time)
-            does TimezoneAware[tz-id,time-out.tz-abbr,time-out.dst.Bool];
-        tz-aware.^set_name('DateTime');
-        return tz-aware
-
-    }
-);
+# Subsets that may or may not be useful for others
+subset NotTimezoneAware of CORE::DateTime where * =:= CORE::DateTime;
+subset    TimezoneAware of CORE::DateTime where * ~~  DateTime;
 
 # If we have a writable container and someone calls timezone, we
 # should attempt to upgrade to being TimezoneAware.  Otherwise,
@@ -162,52 +147,30 @@ INIT DateTime.^find_method('new').wrap(
 # the wrapper has to be declared separately, but INIT scoping keeps
 # us from polluting.  Only problem is that if we error, our
 # message will refer to the *sub* timezone, potentially confusing.
-INIT {
+INIT once {
     proto sub timezone (|) { * }
-    multi sub timezone (TimezoneAware $self, |c) is default {
-        IntStr.new: $self.offset, $self.olson-id
-    }
-    multi sub timezone (NotTimezoneAware $self is rw, |c) {
+    multi sub timezone (CORE::DateTime $self is rw, :$CORE, |c) {
+        return callsame if $CORE;
+
         $self = DateTime.new: $self;
         IntStr.new: $self.offset, $self.olson-id
     }
-    multi sub timezone (NotTimezoneAware $self, |c) {
-        DateTime.new($self).timezone
+    multi sub timezone (CORE::DateTime $self, :$CORE, |c) {
+        return callsame if $CORE;
+
+        DateTime.new($self.Instant, timezone => callsame).timezone
     }
 
-    DateTime.^find_method('timezone').wrap: &timezone
+    CORE::DateTime.^find_method('timezone').wrap: &timezone
 }
 
-INIT DateTime.^find_method('in-timezone').wrap(
+INIT once DateTime.^find_method('in-timezone').wrap(
     method (|c) {
-        if CALLERS::<$*USE-ORIGINAL-DATETIME-NEW> {
-            return callsame
-        }
-
         if c ~~ :($ where Int | Str) {
             # TODO check if string can be made into integer
-            return self.new: self.posix, :timezone(c.list.head)
+            return DateTime.new: self.Instant, :timezone(c.list.head)
         } else {
             "Bad arguments for in-timezone";
-        }
-    }
-);
-
-INIT DateTime.^find_method('posix').wrap(
-    method (|c) {
-        if c ~~ :() {
-            my int $a = (14 - self.month) div 12;
-            my int $y = self.year + 4800 - $a;
-            my int $m = self.month + 12 * $a - 3;
-            my int $jd = self.day + (153 * $m + 2) div 5 + 365 * $y
-                + $y div 4 - $y div 100 + $y div 400 - 32045;
-            ($jd - 2440588) * 86400
-              + self.hour   * 3600
-              + self.minute * 60
-              + self.whole-second
-              - self.offset # we add this offset from the original NQP routine
-        } else {
-            die "No arguments allowed for .posix";
         }
     }
 );
@@ -220,42 +183,42 @@ INIT DateTime.^find_method('posix').wrap(
 # blocks, one that checks if the method name matches us (always True), and the
 # second that returns the actual method (sub, in our case) to be used.
 
-INIT {
+INIT once {
     proto sub olson-id (|) { * }
-    multi sub olson-id (DateTime $self is rw, |c) {
-        $self = DateTime.new: $self;
+    multi sub olson-id (CORE::DateTime $self is rw, |c) {
+        $self = DateTime.new: $self.Instant, timezone => $self.offset;
         $self.olson-id
     }
-    multi sub olson-id (DateTime $self, |c) {
-        DateTime.new($self).olson-id
+    multi sub olson-id (CORE::DateTime $self, |c) {
+        DateTime.new($self.Instant, timezone => $self.offset).olson-id
     }
 
     proto sub tz-abbr (|) { * }
-    multi sub tz-abbr (DateTime $self is rw, |c) {
-        $self = DateTime.new: $self;
+    multi sub tz-abbr (CORE::DateTime $self is rw, |c) {
+        $self = DateTime.new: $self.Instant, timezone => $self.offset;
         $self.tz-abbr
     }
-    multi sub tz-abbr (DateTime $self, |c) {
-        DateTime.new($self).tz-abbr
+    multi sub tz-abbr (CORE::DateTime $self, |c) {
+        DateTime.new($self.Instant, timezone => $self.offset).tz-abbr
     }
 
     proto sub is-dst (|) { * }
-    multi sub is-dst (DateTime $self is rw, |c) {
-        $self = DateTime.new: $self;
+    multi sub is-dst (CORE::DateTime $self is rw, |c) {
+        $self = DateTime.new: $self.Instant, timezone => $self.offset;
         $self.is-dst
     }
-    multi sub is-dst (DateTime $self, |c) {
-        DateTime.new($self).is-dst
+    multi sub is-dst (CORE::DateTime $self, |c) {
+        DateTime.new($self.Instant, timezone => $self.offset).is-dst
     }
 
 
-    DateTime.^add_fallback:
+    CORE::DateTime.^add_fallback:
         anon sub condition ($object, $want) { $want eq 'olson-id' },
         anon sub calculate ($object, $want) {          &olson-id  };
-    DateTime.^add_fallback:
+    CORE::DateTime.^add_fallback:
         anon sub condition ($object, $want) { $want eq 'tz-abbr' },
         anon sub calculate ($object, $want) {          &tz-abbr  };
-    DateTime.^add_fallback:
+    CORE::DateTime.^add_fallback:
         anon sub condition ($object, $want) { $want eq 'is-dst' },
         anon sub calculate ($object, $want) {          &is-dst  };
 }
