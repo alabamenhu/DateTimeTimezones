@@ -28,42 +28,44 @@ This extends `DateTime` to include the following three new attributes whose name
 For the most part, once you enable it, you won't need to do anything different at all, as it is designed to be as discreet as possible.
 There are, nonetheless, a few things to note:
 
- * The default time zone is either **Etc/GMT** *or*, if you have `Intl::UserTimezone`, the one indicated by `user-timezone`.
+ * The default time zone is either **Etc/GMT** *or* (NYI) if you have `Intl::UserTimezone`, the one indicated by `user-timezone`.
  * The attribute `timezone` has been modified slightly to be allomorphic. 
  For creation, you may pass either an `Int` offset *or* a `Str` Olson ID.
  Integer offsets are taken into account but the resultant time will be zoned to GMT (eventually whole-hour offsets will be be given an appropriate `Etc/` zone).  
  When accessing `.timezone`, you get an `IntStr` comprising the offset and the Olson ID, so it should Just Work™. 
  If you absolutely must have a strict `Int` value, use `.offset`, and for a strict `Str` value, use `.olson-id`
- * **(NYI)** The formatter has been changed to indicate the timezone.
- This makes it incompatible with RFC 3339.
- The `use` option 'rfc3339' will restore the original formatter.
+ * The `.Str` method will lose the timezone information.  
  * Using `.later()` and `.earlier()` methods are currently untested.
  You may get unexpected results if you use them and cross a timezone transition.
  * You should only use this on your executed script.  
  Modules that wish to take advantage of `DateTime::Timezones` should *not* `use`it, and instead assume that the methods exist. 
  If functionality is critical, you can try sticking in a `die unless DateTime.^can('is-dst')` that will be executed at runtime.
- This is due to a bug in Rakudo where the original methods of wrapped methods are deleted.  I am working to create a workaround.  
+ This is due to a bug in Rakudo where the original methods of wrapped methods are deleted.  I am working to create a workaround.
+ * Creation via a string is untested and will likely result in errors for the time being (this will be fixed)
  
 ### Leapseconds
 
 Leapseconds are annoying for timekeeping and POSIX explicitly ignores them since future ones are unpredictable because weird physics.
-I do not have the expertise to ensure that leapseconds are handled correctly, but welcome any code review and/or pull requests to remedy this (particularly test cases).
+I have yet to rigorously test that leapseconds are handled correctly, but welcome any code review and/or pull requests to remedy this (particularly test cases).
 
 ## How does it work?
 
 While the module initially planned on `augment`ing `DateTime`, it turns out that has significant problems for things like precompilation (you can't) and requires enabling `MONKEY-TYPING` which just feels dirty.
 
-Instead, `DateTime.new` is wrapped with a new method that returns the same (or functionally the same) `DateTime` you would have expected and mixes in the parameterized `TimezoneAware` role. 
-It has a few tricks to make sure it doesn't apply the role multiple times.
+Previously, `DateTime.new` was wrapped with a new method that returned the same (or functionally the same) `DateTime` you would have expected and mixes in the parameterized `TimezoneAware` role. 
+It had a few tricks to make sure it doesn't apply the role multiple times.  Now, it uses a new technique pioneered by Elizabeth Mattijsen to avoid some of the wraps, and uses the earlier techniques for protecting any precompiled core `DateTime` objects.
 
-The data files come from the [IANA](https://www.iana.org/time-zones), and are compiled using their zone information compiler (ZIC). 
+The data files come from the [IANA](https://www.iana.org/time-zones), and are compiled using their zone information compiler (ZIC) prior to distribution. 
 
 ## Version history
-  - **0.4.0** (in progress)
-    - Rewrite tz data reading and fix calculation errors
-    - "Just works" when module is used inside of another module
+  - **0.4.0**
+    - Timezone data reading moved to a new `Timezones::ZoneInfo` module 
+      - Links (in new module) are handled in code, reducing file size
+      - Calculation errors fixed, especially for future dates, thanks to...
+      - ...new handling of v.3 data files
+      - Test files regarding accuracy moved to that module
+    - Should "just work" when module is used inside of another module (though additional testing is still required here)
       - *Requires Rakudo 2021.10 or later*
-    - Links are handled in code, reducing file size
   - **0.3.9**
     - Fixed an issue caused by changes to the ZIC compiler
       - The `-b fat` option is used for backwards compatibility
@@ -80,8 +82,7 @@ The data files come from the [IANA](https://www.iana.org/time-zones), and are co
       - Updated to the 2021b release
       - Jordan and Samoa updated
       - Zone mergers and renamings
-      - Pre-1993 fixes for Malawi, Portugal, etc
-  - **0.3.5**
+      - Pre-1993 fixes for Malawi, Portugal, etc  - **0.3.5**
     - Updated to the 2021a release
       - South Sudan, Russia (Volgograd), Turks and Caicos updated
       - Many other zones fixed for pre-1986 transitions
