@@ -14,50 +14,56 @@ my $dt = DateTime.new: now;
 
 This extends `DateTime` to include the following three new attributes whose names *are subject to change*.
 
-  * **`.olson-id`** *(Str)*  
-  The unique identifier for the timezone. 
-  These are maintained by the IANA and based around city names, in the format of *Region/City*, and occasionally *Region/Subregion/City*. 
-  They do not tend to align with popular usage.  In the United States, for instance, what is commonly called Eastern Time is listed as America/New_York).
-  * **`.tz-abbr`** *(Str)*  
-  An (mostly) unique abbreviation for the timezone. 
-  It normally is more representative of popular usage (so *EST* for Eastern Standard Time in America/New_York) and normally differs based on daylight savings time.
-  * **`.is-dst`** *(Bool)*  
-  This value is `True` if the timezone is in what is commonly referred to as either Daylight Saving Time (hence the attribute name) or Summer Time where the timezone is shifted by (normally) one hour.
-  The value is `False` during Standard time which in many timezones is the only possible value.
+|    attribute    |  type  | information                                      |
+|:---------------:|:------:|:-------------------------------------------------|
+| **`.olson-id`** | *Str*  | The unique Olson ID for the timezone             |
+| **`.tz-abbr`**  | *Str*  | An (mostly) unique abbreviation for the timezone |
+|  **`.is-dst`**  | *Bool* | Whether the timezone is in daylight savings time |
 
+The Olson IDs (or timezone identifiers) are maintained by the IANA and based around city names, in the format of *Region/City*, and occasionally *Region/Subregion/City*.
+They do not tend to align with popular usage.  
+In the United States, for instance, what is commonly called Eastern Time is listed as America/New_York).
+
+The timezone abbreviation is representative of popular usage, but isn't unique.
+It's appropriate for a quick timestamp as it adjusts for daylight savings time, but for other display purposes, you may want to look to `Intl::Format::DateTime`.
+
+The DST attribute returns whether the timezone is in what is commonly referred to as Daylight Saving Time (or Summer Time).
+In some time zones, `False` is the only value.
+
+### Additional Information
 For the most part, once you enable it, you won't need to do anything different at all, as it is designed to be as discreet as possible.
 There are, nonetheless, a few things to note:
 
- * The default time zone is either **Etc/GMT** *or* (NYI) if you have `Intl::UserTimezone`, the one indicated by `user-timezone`.
- * The attribute `timezone` has been modified slightly to be allomorphic. 
- For creation, you may pass either an `Int` offset *or* a `Str` Olson ID.
- Integer offsets are taken into account but the resultant time will be zoned to GMT (eventually whole-hour offsets will be be given an appropriate `Etc/` zone).  
- When accessing `.timezone`, you get an `IntStr` comprising the offset and the Olson ID, so it should Just Work™. 
- If you absolutely must have a strict `Int` value, use `.offset`, and for a strict `Str` value, use `.olson-id`
- * The `.Str` method will lose the timezone information.  
- * Using `.later()` and `.earlier()` methods are currently untested.
- You may get unexpected results if you use them and cross a timezone transition.
- * You should only use this on your executed script.  
- Modules that wish to take advantage of `DateTime::Timezones` should *not* `use`it, and instead assume that the methods exist. 
- If functionality is critical, you can try sticking in a `die unless DateTime.^can('is-dst')` that will be executed at runtime.
- This is due to a bug in Rakudo where the original methods of wrapped methods are deleted.  I am working to create a workaround.
- * Creation via a string is untested and will likely result in errors for the time being (this will be fixed)
- 
+* The default time zone is either **Etc/GMT**.
+* The attribute `timezone` has been modified slightly to be allomorphic.  
+  For creation, you may pass either an `Int` offset *or* a `Str` Olson ID.
+  Integer offsets are taken into account but the resultant time will be zoned to GMT (eventually whole-hour offsets will be be given an appropriate `Etc/` zone).  
+  When accessing `.timezone`, you get an `IntStr` comprising the offset and the Olson ID, so it should Just Work™.
+  If you absolutely must have a strict `Int` value, use `.offset`, and for a strict `Str` value, use `.olson-id`
+* The formatter is unchanged and only includes offset information, so round-tripping (`DateTime.new($datetime.Str)` may not preserve the Olson ID and DST information.
+* Using `.later()`, `.earlier()` methods are currently untested.  
+  You may get unexpected results if you use them and cross a timezone transition.
+* You should only use this on your executed script.  
+  Modules that wish to take advantage of `DateTime::Timezones` should *not* `use` it, and instead assume that the methods exist.
+  If functionality is critical, you can try sticking in a `die unless DateTime.^can('is-dst')` that will be executed at runtime.
+  This is due to a bug in Rakudo where the original methods of wrapped methods are deleted.  I am working to create a workaround.
+
 ### Leapseconds
 
 Leapseconds are annoying for timekeeping and POSIX explicitly ignores them since future ones are unpredictable because weird physics.
-I have yet to rigorously test that leapseconds are handled correctly, but welcome any code review and/or pull requests to remedy this (particularly test cases).
+I do not have the expertise to ensure that leapseconds are handled correctly, but welcome any code review and/or pull requests to remedy this (particularly test cases).
 
 ## How does it work?
 
 While the module initially planned on `augment`ing `DateTime`, it turns out that has significant problems for things like precompilation (you can't) and requires enabling `MONKEY-TYPING` which just feels dirty.
 
-Previously, `DateTime.new` was wrapped with a new method that returned the same (or functionally the same) `DateTime` you would have expected and mixes in the parameterized `TimezoneAware` role. 
-It had a few tricks to make sure it doesn't apply the role multiple times.  Now, it uses a new technique pioneered by Elizabeth Mattijsen to avoid some of the wraps, and uses the earlier techniques for protecting any precompiled core `DateTime` objects.
-
-The data files come from the [IANA](https://www.iana.org/time-zones), and are compiled using their zone information compiler (ZIC) prior to distribution. 
+Instead, `DateTime.new` is wrapped with a new method that returns the same (or functionally the same) `DateTime` you would have expected and mixes in the parameterized `TimezoneAware` role.
+It has a few tricks to make sure it doesn't apply the role multiple times.
 
 ## Version history
+  - **0.4.1**
+    - Fix bug calling `.timezone` (entered infinite loop)
+    - Fix bug affecting year/month/day handling
   - **0.4.0**
     - Timezone data reading moved to a new `Timezones::ZoneInfo` module 
       - Links (in new module) are handled in code, reducing file size
