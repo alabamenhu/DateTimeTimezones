@@ -134,6 +134,9 @@ class DateTime is DateTime is export {
             olson-id =>  $tz-id,
             timezone =>  IntStr.new(time.gmt-offset, $tz-id);
     }
+
+    #| The timezone as either offset or name (IntStr)
+    method timezone { IntStr.new: self.offset, self.olson-id }
 }
 
 # Subsets that may or may not be useful for others
