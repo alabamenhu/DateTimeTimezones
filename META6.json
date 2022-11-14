@@ -8,7 +8,7 @@
   ],
   "resources": [],
   "raku": "6.*",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "test-depends": [
     "Test"
   ],
@@ -22,13 +22,13 @@
   "name": "DateTime::Timezones",
   "source-url": "git://github.com/alabamenhu/DateTimeTimezones.git",
   "license": "Artistic-2.0",
-  "depends": [ "Timezones::ZoneInfo:ver<0.2+>"],
+  "depends": [ "Timezones::ZoneInfo:auth:<zef:guifa>:ver<0.4.1+>"],
   "support": {
     "source": "git://github.com/alabamenhu/DateTimeTimezones.git"
   },
   "meta-version": "0",
   "auth": "github:alabamenhu",
   "provides": {
-    "DateTime::Timezones": "lib/DateTime/Timezones.pm6"
+    "DateTime::Timezones": "lib/DateTime/Timezones.rakumod"
   }
 }
