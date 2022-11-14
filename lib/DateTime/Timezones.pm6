@@ -10,7 +10,6 @@ class DateTime is DateTime is export {
 
     #| Creates a new timezone-aware DateTime object
     method new(|c (*@, :$olson-id, :$timezone, *%)) {
-
         # The logic here is slightly complicated:
         #   with tz-id or timezone and will get-time-data for the gmt offset.
         #   with an offset only
@@ -108,12 +107,12 @@ class DateTime is DateTime is export {
             tm.minute = c.list[4] // 0;
             tm.second = c.list[5] // 0;
         } elsif c ~~ :(:$year!, *%) {
-            tm.hour   = c.hash<year>;
-            tm.minute = c.hash<month>  // 1;
-            tm.second = c.hash<day>    // 1;
-            tm.hour   = c.hash<hour>   // 0;
-            tm.minute = c.hash<second> // 0;
-            tm.second = c.hash<second> // 0;
+            tm.year   =  c<year> - 1900;
+            tm.month  = (c<month>  // 1) - 1;
+            tm.day    =  c<day>    // 1;
+            tm.hour   =  c<hour>   // 0;
+            tm.minute =  c<minute> // 0;
+            tm.second =  c<second> // 0;
         }
         tm.dst        = c.hash<is-dst>     // -1; # -1 means "we don't know"
         tm.gmt-offset = c.hash<gmt-offset> //  0;
@@ -124,8 +123,8 @@ class DateTime is DateTime is export {
 
 
         self.bless:
-            year     =>  time.year,
-            month    =>  time.year,
+            year     =>  time.year + 1900,
+            month    =>  time.month + 1,
             day      =>  time.day,
             hour     =>  time.hour,
             minute   =>  time.minute,
@@ -153,7 +152,7 @@ INIT once {
         return callsame if $CORE;
 
         $self = DateTime.new: $self;
-        IntStr.new: $self.offset, $self.olson-id
+        $self.timezone
     }
     multi sub timezone (CORE::DateTime $self, :$CORE, |c) {
         return callsame if $CORE;
