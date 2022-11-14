@@ -1,0 +1,25 @@
+use v6.d;
+use Test;
+
+use DateTime::Timezones;
+
+my $min  = Duration.new:           60;
+my $hour = Duration.new:      60 * 60;
+my $day  = Duration.new: 24 * 60 * 60;
+
+my $dt-a = DateTime.new: :2022year, :6month, :15day, :4hour, :56minute, :07second, :timezone<Etc/GMT>;
+my $dt-b = DateTime.new: :2022year, :6month, :15day, :3hour, :56minute, :07second, :timezone<Etc/GMT>;
+my $dt-c = DateTime.new: :2022year, :6month, :15day, :3hour, :55minute, :07second, :timezone<Etc/GMT>;
+
+# Probably also need to check for Instant
+subtest {
+    is ($dt-a - $day).day, 14;
+    is ($dt-a - $dt-b), $hour;
+}, 'Subtraction';
+
+subtest {
+    is ($dt-c +  $min), $dt-b;
+    is ($min  + $dt-c), $dt-b;
+}, 'Addition';
+
+done-testing;
