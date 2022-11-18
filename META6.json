@@ -27,7 +27,7 @@
     "source": "git://github.com/alabamenhu/DateTimeTimezones.git"
   },
   "meta-version": "0",
-  "auth": "github:alabamenhu",
+  "auth": "zef:guifa",
   "provides": {
     "DateTime::Timezones": "lib/DateTime/Timezones.rakumod"
   }
