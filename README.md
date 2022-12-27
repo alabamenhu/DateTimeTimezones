@@ -61,6 +61,10 @@ Instead, `DateTime.new` is wrapped with a new method that returns the same (or f
 It has a few tricks to make sure it doesn't apply the role multiple times.
 
 ## Version history
+  - **0.4.2**
+    - Requires 0.4.2 of `Timezones::ZoneInfo` (fixes an issue with many base timezones like Etc/GMT)
+    - New test file to ensure multiple layers of DateTime don't apply the timezone multiple times
+        - todo: check how multiple versions (e.g. 0.4.2 and 0.4.3) may interact
   - **0.4.1**
     - Fix bug calling `.timezone` (entered infinite loop)
     - Fix bug affecting year/month/day handling
