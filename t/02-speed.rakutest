@@ -26,7 +26,7 @@ for 100_000_000..(100_000_000 + $q) -> $i {
     @b.push: DateTime.new: $i;
 }
 my $time2 = now - $start;
-say "Tz--GMT: ", $time2, "({@b.head.Str} in {@b.head.tz-abbr})";
+say "DTtz-GMT: ", $time2, "({@b.head.Str} in {@b.head.tz-abbr})";
 
 my @c;
 for 100_000_000..(100_000_000 + $q) -> $i {
@@ -34,7 +34,7 @@ for 100_000_000..(100_000_000 + $q) -> $i {
 }
 my $time3 = now - $start;
 
-say "Tz--PST: ", $time3, "({@c.head.Str} in {@c.head.tz-abbr})";
+say "DTtz-PST: ", $time3, "({@c.head.Str} in {@c.head.tz-abbr})";
 
 ok True;
 done-testing();
