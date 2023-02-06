@@ -1,0 +1,34 @@
+use v6.d;
+use Test;
+# This test is designed to ensure that when using the module twice
+# there is no problem with items being double wrapped somehow.
+{
+    # First use, should be the one that actually applies
+    # all timezone wrappers and fallbacks
+    use DateTime::Timezones;
+    ok DateTime.^mro[1] =:= CORE::DateTime, 'Timezone version externally exposed (Core is 2nd in MRO), x1';
+}
+
+{
+    # Second use should really only import into the newer DateTime symbol
+    use DateTime::Timezones;
+    ok DateTime.^mro[1] =:= CORE::DateTime, 'Timezone version externally exposed (Core is 2nd in MRO), x2';
+}
+
+{
+    # Third use should really only import into the newer DateTime symbol
+    use DateTime::Timezones;
+    ok DateTime.^mro[1] =:= CORE::DateTime, 'Timezone version externally exposed (Core is 2nd in MRO), x3';
+}
+
+ok DateTime.^mro[0] =:= CORE::DateTime, 'Core is externally exposed (Core is 1st in MRO)';
+ok DateTime.new(now).^mro[1] =:= CORE::DateTime, 'Upgraded on reification (Core is 2nd in MRO)';
+
+ok (DateTime.^find_method('timezone').is-wrapped
+and DateTime.^find_method('timezone').WRAPPERS.elems == 2), '.timezone is wrapped exactly once';
+
+ok DateTime.^find_method('tz-abbr'), '.tz-abbr is available via FALLBACK';
+ok DateTime.^find_method('olson-id'), '.olson-id is available via FALLBACK';
+ok DateTime.^find_method('is-dst'), '.is-dst is available via FALLBACK';
+
+done-testing;
