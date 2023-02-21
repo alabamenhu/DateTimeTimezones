@@ -22,7 +22,7 @@
   "name": "DateTime::Timezones",
   "source-url": "git://github.com/alabamenhu/DateTimeTimezones.git",
   "license": "Artistic-2.0",
-  "depends": [ "Timezones::ZoneInfo:auth:<zef:guifa>:ver<0.4.2+>"],
+  "depends": [ "Timezones::ZoneInfo:auth<zef:guifa>:ver<0.4.2+>"],
   "support": {
     "source": "git://github.com/alabamenhu/DateTimeTimezones.git"
   },
